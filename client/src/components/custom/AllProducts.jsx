@@ -1,0 +1,236 @@
+import React, { useEffect, useState } from 'react'
+import { Label } from '../ui/label'
+import { Input } from '../ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Button } from '../ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import axios from 'axios'
+import { useDispatch, useSelector } from 'react-redux'
+import { setProducts } from '@/redux/slices/productSlice'
+import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'; // Shadcn Loader
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'; // Shadcn Alert
+
+const AllProducts = () => {
+  const [category, setCategory] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isEditModelOpen, setIsEditModelOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+
+  const [editName, setEditName] = useState('')
+  const [editPrice, setEditPrice] = useState('')
+  const [editCategory, setEditCategory] = useState('')
+  const [editStock, setEditStock] = useState('')
+
+  const [loading, setLoading] = useState(false) // Loading state
+  const [error, setError] = useState(null) // Error state
+
+  const dispatch = useDispatch()
+  const { products } = useSelector((state) => state.products)
+
+  useEffect(() => {
+    const getFilterProducts = async () => {
+      setLoading(true) // Set loading to true when fetching data
+      setError(null) // Reset error before new fetch
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/get-products?category=${category}&search=${searchTerm}`
+        )
+        if (res.data?.data) {
+          dispatch(setProducts(res.data.data))
+        }
+      } catch (error) {
+        setError('Error fetching products. Please try again later.') // Set error message
+      } finally {
+        setLoading(false) // Set loading to false after fetching
+      }
+    }
+    getFilterProducts()
+  }, [searchTerm, category, dispatch])
+
+  const handleEdit = (product) => {
+    setEditingProduct(product)
+    setEditName(product.name)
+    setEditPrice(product.price)
+    setEditStock(product.stock)
+    setEditCategory(product.category || 'Interior')
+    setIsEditModelOpen(true)
+  }
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const updatedProduct = {
+      ...editingProduct,
+      name: formData.get('name'),
+      price: Number(formData.get('price')),
+      stock: Number(formData.get('stock')),
+      category: editCategory,
+    }
+
+    dispatch(setProducts(products.map((p) => p._id === updatedProduct._id ? updatedProduct : p)))
+
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/update-product/${editingProduct._id}`,
+        {
+          name: updatedProduct.name,
+          price: updatedProduct.price,
+          stock: updatedProduct.stock,
+          category: updatedProduct.category,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      )
+      toast.success(`${updatedProduct.name} updated successfully`)
+    } catch (error) {
+      console.error(error)
+      toast.error('Failed to update product. Please try again.')
+    }
+
+    setEditingProduct(null)
+    setIsEditModelOpen(false)
+  }
+
+  return (
+    <div className='max-w-7xl mx-auto px-6 py-10'>
+      {/* Header */}
+      <div className='text-center mb-10'>
+        <h1 className='text-4xl font-bold mb-3'>Explore Our Products</h1>
+        <p className='text-muted-foreground text-lg'>Discover premium automotive accessories</p>
+      </div>
+
+      {/* Filters */}
+      <div className='flex flex-col sm:flex-row items-center gap-4 mb-12'>
+        <Input
+          type='text'
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder='Search products...'
+          className='flex-1 h-12 rounded-lg border-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-primary'
+        />
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger className="w-full sm:w-48 h-12 rounded-lg border-muted-foreground/30">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="Perfume & Fragrances">Perfume & Fragrances</SelectItem>
+            <SelectItem value="Stickers Emblems Key Chains">Stickers Emblems Key Chains</SelectItem>
+            <SelectItem value="Interior">Interior</SelectItem>
+            <SelectItem value="Exterior">Exterior</SelectItem>
+            <SelectItem value="Security Badges">Security Badges</SelectItem>
+            <SelectItem value="Lightening">Lightening</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Loader and Error Handling */}
+      {loading && (
+        <div className='flex justify-center items-center'>
+          <Loader2 className="animate-spin text-gray-500" size={48} />
+        </div>
+      )}
+
+      {error && (
+        <Alert variant="destructive" className="w-full mb-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Products Grid */}
+      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
+        {products?.map((item) => (
+          <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group">
+            <div className="aspect-square bg-muted/50">
+              <img
+                src={item.image?.[0]?.url || '/fallback.jpg'}
+                alt={item.name}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            <div className="p-5 flex flex-col gap-3">
+              <h3 className="text-lg font-semibold line-clamp-1">{item.name}</h3>
+              <div className="flex justify-between items-center">
+                <span className="text-primary text-xl font-bold">{`$${item.price}`}</span>
+                <span className="text-sm text-muted-foreground">{`Stock: ${item.stock}`}</span>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="w-full mt-2">
+                Edit
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Edit Product Modal */}
+      <Dialog open={isEditModelOpen} onOpenChange={setIsEditModelOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit}>
+            <div className="grid gap-6 py-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="stock">Stock</Label>
+                <Input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  value={editStock}
+                  onChange={(e) => setEditStock(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category">Category</Label>
+                <Select value={editCategory} onValueChange={setEditCategory}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Perfume & Fragrances">Perfume & Fragrances</SelectItem>
+                    <SelectItem value="Stickers Emblems Key Chains">Stickers Emblems Key Chains</SelectItem>
+                    <SelectItem value="Interior">Interior</SelectItem>
+                    <SelectItem value="Exterior">Exterior</SelectItem>
+                    <SelectItem value="Security Badges">Security Badges</SelectItem>
+                    <SelectItem value="Lightening">Lightening</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full">
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+export default AllProducts;
