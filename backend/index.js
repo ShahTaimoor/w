@@ -15,7 +15,7 @@ const settingRoutes = require('./routes/settingsRoutes')
 
 
 app.use(cors({
-    origin: process.env.CLIENT_URL, 
+    origin: "http://localhost:5173",
     credentials: true
 }));
 app.use(express.json());
@@ -37,6 +37,8 @@ app.use('/api/cart', cartRoutes)
 app.use('/api/checkout', checkoutRoutes)
 app.use('/api', orderRoutes)
 app.use('/api/upload', uploadRoutes)
+
+
 
 
 // admin routes
