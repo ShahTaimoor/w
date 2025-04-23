@@ -8,6 +8,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css/pagination';
+
 const FilterMenu = () => {
     const dispatch = useDispatch();
     const products = useSelector((state) => state.products);

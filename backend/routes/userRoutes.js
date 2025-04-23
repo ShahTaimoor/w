@@ -13,18 +13,18 @@ const router = express.Router()
 // @access Public
 
 router.post('/signup', async (req, res) => {
-    const { name, email, password } = req.body
+    const { name, username, password } = req.body
 
     try {
         // Registration logic
-        let user = await User.findOne({ email })
+        let user = await User.findOne({ username })
         if (user) {
             return res.status(400).json({ message: 'user alredy exist' })
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        user = new User({ name, email, password: hashedPassword })
+        user = new User({ name, username, password: hashedPassword })
 
         await user.save()
 
@@ -48,17 +48,17 @@ router.post('/signup', async (req, res) => {
 // @desc Authenticate user
 //  @access Public
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body
+    const { username, password } = req.body
 
     try {
 
-        let user = await User.findOne({ email })
+        let user = await User.findOne({ username })
 
         if (!user) return res.status(400).json({ message: 'Invalid Credintials in login' })
 
         const comparePassword = await bcrypt.compare(password, user.password)
         if (!comparePassword) {
-            return res.status(400).json({ message: 'email and password is incorrect' })
+            return res.status(400).json({ message: 'username and password is incorrect' })
         }
 
 
@@ -67,7 +67,7 @@ router.post('/login', async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email,
+                username: user.username,
                 role: user.role
             },
             token
@@ -136,7 +136,7 @@ router.post('/admin-login', async (req, res) => {
             user: {
                 id: admin._id,
                 name: admin.name,
-                email: admin.email,
+                username: admin.username,
                 role: admin.role
             },
             token
