@@ -62,10 +62,7 @@ const Signup = () => {
           </Alert>
         )}
 
-        <div className='mb-4'>
-          <label className='block text-sm font-semibold mb-2'>Name</label>
-          <Input placeholder='Enter Your Name' type='text' name='name' />
-        </div>
+       
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>username</label>
           <Input placeholder='Enter Your username' type='username' name='username' />
