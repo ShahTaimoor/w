@@ -1,116 +1,144 @@
-import React, { useEffect, useState } from 'react'
-import { Label } from '../ui/label'
-import { Input } from '../ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Button } from '../ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import axios from 'axios'
-import { useDispatch, useSelector } from 'react-redux'
-import { setProducts } from '@/redux/slices/productSlice'
-import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'; // Shadcn Loader
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'; // Shadcn Alert
+import React, { useEffect, useState } from 'react';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { setProducts, updateProduct, deleteProduct } from '@/redux/slices/productSlice';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+import { removeFromCart } from '@/redux/slices/cartSlice';
 
 const AllProducts = () => {
-  const [category, setCategory] = useState('all')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [isEditModelOpen, setIsEditModelOpen] = useState(false)
-  const [editingProduct, setEditingProduct] = useState(null)
+  const [category, setCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isEditModelOpen, setIsEditModelOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editStock, setEditStock] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [noProductsFound, setNoProductsFound] = useState(false);
+  const [editImages, setEditImages] = useState([]);
 
-  const [editName, setEditName] = useState('')
-  const [editPrice, setEditPrice] = useState('')
-  const [editCategory, setEditCategory] = useState('')
-  const [editStock, setEditStock] = useState('')
-
-  const [loading, setLoading] = useState(false) // Loading state
-  const [error, setError] = useState(null) // Error state
-
-  const dispatch = useDispatch()
-  const { products } = useSelector((state) => state.products)
+  const dispatch = useDispatch();
+  const { products } = useSelector((state) => state.products);
 
   useEffect(() => {
     const getFilterProducts = async () => {
-      setLoading(true) // Set loading to true when fetching data
-      setError(null) // Reset error before new fetch
+      setLoading(true);
+      setError(null);
+      setNoProductsFound(false);
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/get-products?category=${category}&search=${searchTerm}`
-        )
-        if (res.data?.data) {
-          dispatch(setProducts(res.data.data))
-        }
+        );
+        const fetchedProducts = res.data?.data || [];
+        dispatch(setProducts(fetchedProducts));
+        setNoProductsFound(fetchedProducts.length === 0);
       } catch (error) {
-        setError('Error fetching products. Please try again later.') // Set error message
+        toast('Category Not Found');
+        dispatch(setProducts([]));     
+        setNoProductsFound(true);
       } finally {
-        setLoading(false) // Set loading to false after fetching
+        setLoading(false);
       }
-    }
-    getFilterProducts()
-  }, [searchTerm, category, dispatch])
+    };
+    getFilterProducts();
+  }, [searchTerm, category, dispatch]);
 
   const handleEdit = (product) => {
-    setEditingProduct(product)
-    setEditName(product.name)
-    setEditPrice(product.price)
-    setEditStock(product.stock)
-    setEditCategory(product.category || 'Interior')
-    setIsEditModelOpen(true)
-  }
+    setEditingProduct(product);
+    setEditName(product.name);
+    setEditPrice(product.price);
+    setEditStock(product.stock);
+    setEditCategory(product.category);
+    setIsEditModelOpen(true);
+  };
 
   const handleEditSubmit = async (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const updatedProduct = {
-      ...editingProduct,
-      name: formData.get('name'),
-      price: Number(formData.get('price')),
-      stock: Number(formData.get('stock')),
-      category: editCategory,
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', editName);
+    formData.append('price', editPrice);
+    formData.append('stock', editStock);
+    formData.append('category', editCategory);
+
+    if (editImages.length > 0) {
+      editImages.forEach((file) => {
+        formData.append('images', file);
+      });
     }
 
-    dispatch(setProducts(products.map((p) => p._id === updatedProduct._id ? updatedProduct : p)))
+    try {
+      const res = await axios.put(
+        `${import.meta.env.VITE_API_URL}/update-product/${editingProduct._id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      if (res.data.success) {
+        toast.success(`${editName} updated successfully`);
+        const updatedProduct = res.data.data;
+        dispatch(updateProduct(updatedProduct));
+
+        setIsEditModelOpen(false);
+        setEditImages([]);
+      }
+    } catch (error) {
+      toast.error('Failed to update product');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/update-product/${editingProduct._id}`,
-        {
-          name: updatedProduct.name,
-          price: updatedProduct.price,
-          stock: updatedProduct.stock,
-          category: updatedProduct.category,
-        },
+      const res = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/delete-product/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
-      )
-      toast.success(`${updatedProduct.name} updated successfully`)
-    } catch (error) {
-      console.error(error)
-      toast.error('Failed to update product. Please try again.')
-    }
+      );
 
-    setEditingProduct(null)
-    setIsEditModelOpen(false)
-  }
+      if (res.data.success) {
+        toast.success('Product deleted successfully');
+        dispatch(deleteProduct(id));
+      } else {
+        toast.error('Failed to delete product');
+      }
+    } catch (error) {
+      toast.error('Something went wrong');
+    }
+  };
 
   return (
-    <div className='max-w-7xl mx-auto px-6 py-10'>
+    <div className="max-w-7xl mx-auto px-6 py-10">
       {/* Header */}
-      <div className='text-center mb-10'>
-        <h1 className='text-4xl font-bold mb-3'>Explore Our Products</h1>
-        <p className='text-muted-foreground text-lg'>Discover premium automotive accessories</p>
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-bold mb-3">Explore Our Products</h1>
+        <p className="text-muted-foreground text-lg">Discover premium automotive accessories</p>
       </div>
 
       {/* Filters */}
-      <div className='flex flex-col sm:flex-row items-center gap-4 mb-12'>
+      <div className="flex flex-col sm:flex-row items-center gap-4 mb-12">
         <Input
-          type='text'
+          type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder='Search products...'
-          className='flex-1 h-12 rounded-lg border-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-primary'
+          placeholder="Search products..."
+          className="flex-1 h-12 rounded-lg border-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-primary"
         />
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-full sm:w-48 h-12 rounded-lg border-muted-foreground/30">
@@ -130,20 +158,19 @@ const AllProducts = () => {
 
       {/* Loader and Error Handling */}
       {loading && (
-        <div className='flex justify-center items-center'>
+        <div className="flex justify-center items-center">
           <Loader2 className="animate-spin text-gray-500" size={48} />
         </div>
       )}
 
-      {error && (
-        <Alert variant="destructive" className="w-full mb-4">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+      {!loading && noProductsFound && (
+        <div className="text-center text-muted-foreground text-lg mt-4">
+          No products found for this category.
+        </div>
       )}
 
       {/* Products Grid */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {products?.map((item) => (
           <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group">
             <div className="aspect-square bg-muted/50">
@@ -159,6 +186,14 @@ const AllProducts = () => {
                 <span className="text-primary text-xl font-bold">{`$${item.price}`}</span>
                 <span className="text-sm text-muted-foreground">{`Stock: ${item.stock}`}</span>
               </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDelete(item._id)}
+                className="w-full mt-2"
+              >
+                Delete
+              </Button>
               <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="w-full mt-2">
                 Edit
               </Button>
@@ -220,6 +255,17 @@ const AllProducts = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="images">Images</Label>
+                <Input
+                  id="images"
+                  name="images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setEditImages([...e.target.files])}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit" className="w-full">
@@ -230,7 +276,7 @@ const AllProducts = () => {
         </DialogContent>
       </Dialog>
     </div>
-  )
-}
+  );
+};
 
 export default AllProducts;

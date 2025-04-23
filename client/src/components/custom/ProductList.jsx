@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import { useSelector } from 'react-redux';
-import { Skeleton } from '@/components/ui/skeleton'; // Shadcn Skeleton component (adjust path as needed)
+import { Skeleton } from '@/components/ui/skeleton'; 
 
 const ProductList = () => {
-    const { products, isLoading } = useSelector((state) => state.products); // Assuming you have a loading state in Redux
+    const { products, isLoading } = useSelector((state) => state.products); 
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (products?.length > 0) {
-            setLoading(false); // Set loading to false once products are loaded
+            setLoading(false);
         }
     }, [products]);
 

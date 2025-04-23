@@ -32,7 +32,7 @@ const CartProduct = ({ _id, name, price, quantity, image, stock }) => {
             </div>
             <div className="flex items-center">
                 <p className="font-semibold text-gray-900">
-                    ₹{total.toLocaleString()}
+                    0
                 </p>
             </div>
         </div>

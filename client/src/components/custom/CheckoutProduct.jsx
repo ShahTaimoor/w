@@ -33,7 +33,7 @@ const CheckoutProduct = ({
             <div className="w-px h-4 bg-gray-300" />
             <span className="flex items-center gap-1">
               <span className="font-medium">Price:</span>
-              ${price.toFixed(2)}
+             0
             </span>
           </div>
         </div>

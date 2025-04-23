@@ -7,7 +7,6 @@ import { Toaster } from "./components/ui/sonner";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Product from "./pages/Product";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
 import Success from "./pages/Success";
@@ -53,14 +52,6 @@ const App = () => {
       element: (
         <RootLayout>
           <Signup />
-        </RootLayout>
-      ),
-    },
-    {
-      path: "/product/:productName",
-      element: (
-        <RootLayout>
-          <Product />
         </RootLayout>
       ),
     },

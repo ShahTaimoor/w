@@ -14,47 +14,48 @@ const router = express.Router()
 // @access Private
 
 router.post('/order', protect, async (req, res) => {
-    try {
-        const { products, address, amount } = req.body;
+  try {
+      const { products, address, amount } = req.body;
 
-        if (!products || products.length === 0) {
-            return res.status(400).json({ success: false, message: 'No products provided' });
-        }
+      if (!products || products.length === 0) {
+          return res.status(400).json({ success: false, message: 'No products provided' });
+      }
 
-        // Step 1: Check stock and reduce it
-        for (const item of products) {
-            const product = await Product.findById(item.id);
+      // Step 1: Check stock and reduce it
+      for (const item of products) {
+          const product = await Product.findById(item.id);
 
-            if (!product) {
-                return res.status(404).json({ success: false, message: `Product not found: ${item.id}` });
-            }
+          if (!product) {
+              return res.status(404).json({ success: false, message: `Product not found: ${item.id}` });
+          }
 
-            if (product.stock < item.quantity) {
-                return res.status(400).json({ success: false, message: `Not enough stock for product: ${product.name}` });
-            }
+          if (product.stock < item.quantity) {
+              return res.status(400).json({ success: false, message: `Not enough stock for product: ${product.name}` });
+          }
 
-            product.stock -= item.quantity; // Decrease the stock
-            await product.save();
-        }
+          product.stock -= item.quantity; // Decrease the stock
+          await product.save();
+      }
 
-        // Step 2: Save the order after stock is updated
-        const newOrder = new Order({
-            products,
-            userId: req.id,
-            address,
-            amount,
-            paymentMethod: 'COD',
-            status: 'Pending'
-        });
+      // Step 2: Save the order after stock is updated
+      const newOrder = new Order({
+          products,
+          userId: req.id,
+          address,
+          amount,
+          paymentMethod: 'COD',
+          status: 'Pending'
+      });
 
-        const savedOrder = await newOrder.save();
+      const savedOrder = await newOrder.save();
 
-        return res.status(201).json({ success: true, data: savedOrder });
-    } catch (error) {
-        console.error('COD Order Error:', error);
-        return res.status(500).json({ success: false, message: 'Server Error' });
-    }
+      return res.status(201).json({ success: true, data: savedOrder });
+  } catch (error) {
+      console.error('COD Order Error:', error);  // This will log the error
+      return res.status(500).json({ success: false, message: 'Server Error' });
+  }
 });
+
 
 // @route GET /api/orders/my-orders
 // @desc Get logged-in users orders

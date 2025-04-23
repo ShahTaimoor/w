@@ -4,9 +4,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from 'lucide-react'; // Assuming you're using Shadcn icons
+import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -16,9 +15,9 @@ import axios from 'axios';
 
 const Checkout = () => {
   const [address, setAddress] = useState('');
-  const [loading, setLoading] = useState(false); // Add loading state
-  const [error, setError] = useState(null); // Add error state
-  const { cartItems, totalQuantity, totalPrice } = useSelector((state) => state.cart);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { cartItems, totalPrice } = useSelector((state) => state.cart);
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -34,7 +33,7 @@ const Checkout = () => {
     }));
 
     try {
-      setLoading(true); // Set loading to true before the request
+      setLoading(true);
       const res = await axios.post(`${import.meta.env.VITE_API_URL}/order`, {
         products: productArray,
         amount: totalPrice.toFixed(2),
@@ -57,78 +56,69 @@ const Checkout = () => {
       setError('Something went wrong!');
       toast.error('Something went wrong!');
     } finally {
-      setLoading(false); // Set loading to false after the request completes
+      setLoading(false);
     }
   };
 
   return (
-    <div className='mx-auto w-[90vw] sm:w-[60vw] flex justify-between items-center sm:my-20'>
-      <div className='flex flex-col sm:flex-row gap-5 mx-auto my-10'>
-        {/* Product details */}
-        <div className='space-y-8'>
-          <div className='p-4 space-y-4'>
-            <h2 className='text-xl font-medium '>Order Summary</h2>
-            <div className='space-y-1 text-3xl'>
-              {
-                cartItems.map((item) => <CheckoutProduct key={item._id} {...item} />)
-              }
-              <hr />
-              <div className='p-3 rounded-md'>
-                <p className='flex justify-between items-center'>
-                  <span>Subtotal:</span>
-                  <span>{totalPrice}</span>
-                </p>
-                <p className='flex justify-between items-center'>
-                  <span>Tax:</span>
-                  <span>0</span>
-                </p>
-                <p className='flex justify-between items-center'>
-                  <span>Shipping:</span>
-                  <span>0</span>
-                </p>
-              </div>
-              <hr />
-              <div className='p-3 rounded-md'>
-                <p className='flex justify-between items-center'>
-                  <span>Total:{totalPrice * totalQuantity}</span>
-                  <span>0</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className='mx-auto max-w-6xl px-4 sm:px-8 py-12'>
+      <div className='flex flex-col sm:flex-row gap-10'>
 
-        {/* Personal Details */}
-        <div className='w-[90vw] sm:w-[20vw]'>
-          <Card className='p-4 shadow-md space-y-4'>
-            <h2>Billing Information</h2>
-            <div className='space-y-2'>
-              <Label htmlFor="name">Full Name</Label>
-              <Input id='name' value={user?.name} placeholder='Taimoor' className='w-full' />
-              <Label htmlFor="email">Email Address</Label>
-              <Input id='email' value={user?.email} placeholder='123@example.com' className='w-full' />
-              <Label htmlFor="address">Shipping Address</Label>
-              <Textarea onChange={(e) => setAddress(e.target.value)} id='address' placeholder='123 mai city' className='w-full' />
-              <Button onClick={handleCheckout} disabled={loading}>Place Order</Button>
+        {/* LEFT: Order Summary */}
+        <div className='sm:w-2/3 space-y-6'>
+          <h2 className='text-2xl font-semibold text-gray-800'>Order Summary</h2>
+          <Card className="p-6 space-y-4">
+            {cartItems.map((item) => (
+              <CheckoutProduct key={item._id} {...item} />
+            ))}
+            <hr />
+            <div className='flex justify-between text-lg font-semibold'>
+              <span>Total Price:</span>
+              <span>0</span>
             </div>
           </Card>
         </div>
-      </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="w-full h-full flex items-center justify-center mt-4">
-          <Loader2 className="animate-spin text-primary" size={48} />
+        {/* RIGHT: Billing Information */}
+        <div className='sm:w-1/3'>
+          <Card className='p-6 shadow-lg rounded-lg space-y-6'>
+            <h2 className='text-xl font-semibold text-gray-800'>Billing Information</h2>
+
+            <div className='space-y-4'>
+              <Label htmlFor="name" className="text-sm">Full Name</Label>
+              <Input id='name' value={user?.name} disabled placeholder='John Doe' />
+
+              <Label htmlFor="email" className="text-sm">Email Address</Label>
+              <Input id='email' value={user?.email} disabled placeholder='john@example.com' />
+
+              <Label htmlFor="address" className="text-sm">Shipping Address</Label>
+              <Textarea
+                id='address'
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder='Enter your full address'
+                rows={4}
+              />
+            </div>
+
+            <Button
+              onClick={handleCheckout}
+              disabled={loading || address.trim() === ''}
+              className='w-full mt-4'
+            >
+              {loading ? <Loader2 className="animate-spin text-white mr-2" size={20} /> : 'Place Order'}
+            </Button>
+          </Card>
+
+          {/* Error Message */}
+          {error && (
+            <Alert variant="destructive" className="mt-6">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </div>
-      )}
-
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      </div>
     </div>
   );
 };

@@ -11,21 +11,22 @@ import {
 import { Button } from '../ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import CartProduct from './CartProduct';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { emptyCart } from '@/redux/slices/cartSlice';
 import { toast } from 'sonner';
 
 const CartDrawer = () => {
     const { cartItems, totalQuantity, totalPrice } = useSelector((state) => state.cart);
     const { isAuthenticated } = useSelector((state) => state.auth);
-    const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [address, setAddress] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [stockErrors, setStockErrors] = useState([]);
+    const [address, setAddress] = useState(''); // State to handle address input
+
+    const handleAddressChange = (e) => {
+        setAddress(e.target.value);
+    };
 
     const handleBuyNow = async () => {
         if (!isAuthenticated) return navigate('/login');
@@ -35,48 +36,10 @@ const CartDrawer = () => {
             return;
         }
 
-        if (!address.trim()) {
-            toast.error('Please enter an address.');
-            return;
-        }
-
         setIsProcessing(true);
+        navigate('/checkout')
 
-        try {
-            const orderData = {
-                products: cartItems.map((item) => ({
-                    id: item?._id,
-                    quantity: item.quantity,
-                    price: item.price
-                })),
-                amount: totalPrice.toFixed(2),
-                address: address.trim(),
-            };
 
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/order`, orderData, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                },
-            });
-
-            if (res.data.success) {
-                toast.success('Order placed successfully!');
-                dispatch(emptyCart());
-                setTimeout(() => {
-                    navigate('/orders');
-                }, 300);
-            } else if (res.data.outOfStockItems) {
-                setStockErrors(res.data.outOfStockItems);
-                toast.error('Some items are out of stock');
-            } else {
-                toast.error(res.data.message || 'Failed to place order');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error(error.response?.data?.message || 'Something went wrong!');
-        } finally {
-            setIsProcessing(false);
-        }
     };
 
     return (
@@ -98,10 +61,13 @@ const CartDrawer = () => {
                     <DrawerHeader>
                         <DrawerTitle className="text-xl font-bold">Your Cart</DrawerTitle>
                         <DrawerDescription>
-                            Total Quantity: {totalQuantity} — Total Price: Rs {totalPrice.toLocaleString()}
+                            Total Quantity: {totalQuantity}
                         </DrawerDescription>
                     </DrawerHeader>
 
+                 
+
+                    {/* Display Stock Errors */}
                     {stockErrors.length > 0 && (
                         <div className="px-6 py-2 bg-red-50 text-red-700">
                             <p className="font-medium">Stock issues:</p>
@@ -111,29 +77,17 @@ const CartDrawer = () => {
                         </div>
                     )}
 
+                    {/* Display Cart Items */}
                     {cartItems.length > 0 ? (
                         cartItems.map((item) => <CartProduct key={item._id} {...item} />)
                     ) : (
                         <p className="text-center text-gray-500 py-6">Your cart is empty.</p>
                     )}
 
-                    {cartItems.length > 0 && (
-                        <div className="px-6 py-4">
-                            <input
-                                type="text"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                                placeholder="Enter your address"
-                                className="border p-2 rounded-md w-full text-sm"
-                                required
-                            />
-                        </div>
-                    )}
-
                     <DrawerFooter>
-                        <Button 
-                            onClick={handleBuyNow} 
-                            disabled={cartItems.length === 0 || isProcessing || stockErrors.length > 0}
+                        <Button
+                            onClick={handleBuyNow}
+                            disabled={cartItems.length === 0 || isProcessing || stockErrors.length > 0 }
                         >
                             {isProcessing ? 'Processing...' : 'Checkout'}
                         </Button>

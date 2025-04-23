@@ -50,29 +50,53 @@ router.post('/create-product', protect, upload.array('images', 4), async (req, r
 // @desc Update an existing product ID
 // @access Private/Admin
 
-router.put('/update-product/:id', protect, async (req, res) => {
+router.put('/update-product/:id', protect, upload.array('images', 4), async (req, res) => {
     if (req.role !== ROLES.admin) {
-        return res.status(401).json({ success: false, message: 'Access Denaid' })
+        return res.status(401).json({ success: false, message: 'Access Denied' });
     }
 
     try {
-        const { ...data } = req.body
-        const { id } = req.params
+        const { name, price, stock, category, images } = req.body;
+        const { id } = req.params;
 
-        const product = await Product.findByIdAndUpdate(id, data, { new: true })
+        let updateData = { name, price, stock, category, images };
 
-        if (!product) {
-            return res.status(404).json({ success: false, message: 'Product Not Found' })
+        if (req.files && req.files.length > 0) {
+            const uploadedImages = [];
+
+            for (const file of req.files) {
+                const result = await cloudinary.uploader.upload(file.path, {
+                    folder: 'products',
+                });
+                uploadedImages.push({
+                    url: result.secure_url,
+                    id: result.public_id,
+                });
+            }
+
+            updateData.images = uploadedImages;
         }
 
-        return res.status(201).json({ sucess: true, message: 'Product Updated Successfully', date: product })
+        const updatedProduct = await Product.findByIdAndUpdate(id, updateData, {
+            new: true,
+        });
 
+        if (!updatedProduct) {
+            return res.status(404).json({ success: false, message: 'Product Not Found' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Product updated successfully',
+            data: updatedProduct,
+        });
 
     } catch (error) {
-        console.error(error)
-        res.status(500).send('Server error in update Product')
+        console.error(error);
+        res.status(500).send('Server error in update Product');
     }
-})
+});
+
 
 // @route DELETE /api/producs/:id
 // @desc Delete a prdocut by ID
@@ -126,7 +150,7 @@ router.get('/get-products', async (req, res) => {
         const totalPages = Math.ceil(totalProducts / limit);
 
         const products = await Product.find(query)
-            .select('name images price description stock' )
+            .select('name images price description stock')
             .skip((page - 1) * limit)
             .limit(limit);
 
@@ -162,25 +186,6 @@ router.get('/get-products', async (req, res) => {
 
 
 
-router.get('/get-product-by-name/:name', async (req, res) => {
-    try {
-        const { name } = req.params;
-
-        // Look for the product by name in the database
-        const product = await Product.findOne({ name });
-
-        if (!product) {
-            return res.status(404).json({ success: false, message: 'Product Not Found' });
-        }
-
-        // Return the product data in the response with a 200 OK status code
-        return res.status(200).json({ success: true, message: 'Product Retrieved Successfully', data: product });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, message: 'Server error in retrieving product' });
-    }
-});
 
 
 
