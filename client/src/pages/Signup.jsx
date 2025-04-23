@@ -16,9 +16,9 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const { name, email, password } = e.target.elements
+    const { name, username, password } = e.target.elements
 
-    if (name.value.trim() === '' || email.value.trim() === '' || password.value.trim() === '') {
+    if (name.value.trim() === '' || username.value.trim() === '' || password.value.trim() === '') {
       toast.error("Please fill all the fields")
       return
     }
@@ -29,7 +29,7 @@ const Signup = () => {
     try {
       const res = await axios.post(import.meta.env.VITE_API_URL + '/signup', {
         name: name.value,
-        email: email.value,
+        username: username.value,
         password: password.value
       })
 
@@ -67,8 +67,8 @@ const Signup = () => {
           <Input placeholder='Enter Your Name' type='text' name='name' />
         </div>
         <div className='mb-4'>
-          <label className='block text-sm font-semibold mb-2'>Email</label>
-          <Input placeholder='Enter Your Email' type='email' name='email' />
+          <label className='block text-sm font-semibold mb-2'>username</label>
+          <Input placeholder='Enter Your username' type='username' name='username' />
         </div>
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Password</label>
