@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 
 const productSchema = new mongoose.Schema({
-    name: {
+    title: {
         type: String,
         required: true,
         trim: true
@@ -20,25 +20,27 @@ const productSchema = new mongoose.Schema({
         default: 0
     },
     category: {
-        type: String,
-        enum: ["All", "Perfume & Fragrances", "Stickers Emblems Key Chains", "Interior", "Exterior", "Security Badges", "Lightening"],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category',
         required: true
     },
-    sku: {
-        type: String,
-        unique: true,
-        required: true, // only if you want it to be mandatory
-    },
-    images: [
-        {
-            type: Array,
+   
+    picture: {
+        secure_url: {
+            type: String,
             required: true
-        }
-    ],
+        },
+        public_id: {
+            type: String,
+            required: true
+        },
+    },
+    
 
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        required: true
     },
 
 

@@ -10,8 +10,9 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { addOrder } from '@/redux/slices/order/orderSlice';
 import { emptyCart } from '@/redux/slices/cartSlice';
-import axios from 'axios';
+
 
 const Checkout = () => {
   const [address, setAddress] = useState('');
@@ -34,26 +35,24 @@ const Checkout = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/order`, {
+      const orderData = {
         products: productArray,
         amount: totalPrice.toFixed(2),
         address: address,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      };
 
-      if (res.data.success) {
+      const res = await dispatch(addOrder(orderData)).unwrap();
+     console.log(orderData);
+     
+      if (res.success) {
         dispatch(emptyCart());
         navigate('/success');
         toast.success('Order placed successfully!');
       } else {
         toast.error('Failed to place order');
       }
-    } catch (error) {
-      console.error(error);
-      setError('Something went wrong!');
+    } catch (err) {
+      setError(err || 'Something went wrong!');
       toast.error('Something went wrong!');
     } finally {
       setLoading(false);
@@ -74,7 +73,7 @@ const Checkout = () => {
             <hr />
             <div className='flex justify-between text-lg font-semibold'>
               <span>Total Price:</span>
-              <span>0</span>
+              <span>${totalPrice.toFixed(2)}</span>
             </div>
           </Card>
         </div>

@@ -1,51 +1,51 @@
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-
-    // Middleware to protect routes
-
-const protect = (req, res, next) => {
-    const token = req.cookies?.token || req.header('Authorization')?.split(" ")[1]
-
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: 'Unauthorized request'
-        })
-    }
-
+// Middleware to check if user is authorized
+const isAuthorized = async (req, res, next) => {
     try {
+        const { token } = req.cookies;
 
-        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-            if (err) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid token'
-                })
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Please log in first.' });
+        }
 
-            }
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-            req.id = user.id
-            req.role = user.role
-            next()
-        })
+        const user = await User.findById(decodedToken.id);
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'User not found.' });
+        }
 
+        req.user = user;
+        next();
     } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        })
+        console.error('Error in isAuthorized middleware:', error.message);
+        return res.status(401).json({ success: false, message: 'Invalid or expired token.' });
     }
+};
 
+// Middleware to check if user is admin
+const isAdmin = (req, res, next) => {
+    try {
+        const { user } = req;
 
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'User not authenticated.' });
+        }
 
-}
+        if (user.role !== 1) {
+            return res.status(403).json({ success: false, message: 'Access denied. Admins only.' });
+        }
 
-
-// Middleware to check if the user is in admin
-
-
+        next();
+    } catch (error) {
+        console.error('Error in isAdmin middleware:', error.message);
+        return res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+};
 
 module.exports = {
-    protect
-
-}
+    isAuthorized,
+    isAdmin,
+};

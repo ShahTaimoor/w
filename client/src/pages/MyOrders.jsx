@@ -1,39 +1,22 @@
-import OrderData from '@/components/custom/OrderData';
-import axios from 'axios';
-import React, { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react'; // Assuming you're using Shadcn icons
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import OrderData from '@/components/custom/OrderData';
+import { fetchOrders } from '@/redux/slices/order/orderSlice';
 
 const MyOrders = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [error, setError] = useState(null); // Add error state
+  const dispatch = useDispatch();
 
+  const { orders, status, error } = useSelector((state) => state.orders);
+
+  console.log(orders);
+  
   useEffect(() => {
-    const getMyOrders = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(import.meta.env.VITE_API_URL + '/get-orders-by-user-id', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+    dispatch(fetchOrders());
+  }, [dispatch]);
 
-        const { data } = await res.data;
-        setOrders(data);
-      } catch (error) {
-        toast.error('Order Error');
-        setError('Failed to fetch orders. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getMyOrders();
-  }, []);
-
-  if (loading) {
+  if (status === 'loading') {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <Loader2 className="animate-spin text-primary" size={48} />
@@ -45,16 +28,20 @@ const MyOrders = () => {
     <div className="w-[90vw] lg:w-[50vw] mx-auto my-10 sm:my-32 grid gap-3">
       <h1 className="text-2xl font-bold">My Orders</h1>
 
-      {error ? (
+      {status === 'failed' ? (
         <Alert variant="destructive">
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error || 'Something went wrong fetching your orders.'}</AlertDescription>
         </Alert>
       ) : (
         <div className="grid gap-3">
-          {orders.map((order) => (
-            <OrderData key={order._id} {...order} />
-          ))}
+          {orders.length === 0 ? (
+            <p className="text-gray-500">No orders found.</p>
+          ) : (
+            orders.map((order) => (
+              <OrderData key={order._id} {...order} />
+            ))
+          )}
         </div>
       )}
     </div>

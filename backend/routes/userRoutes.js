@@ -1,8 +1,8 @@
 const express = require('express')
 const User = require('../models/User')
-const Admin = require('../models/Admin')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const { isAuthorized, isAdmin } = require('../middleware/authMiddleware')
 
 
 const router = express.Router()
@@ -24,14 +24,13 @@ router.post('/signup', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        user = new User({ name, email, password: hashedPassword })
-
-        await user.save()
+        user = User.create({ name, email, password: hashedPassword })
 
 
         res.status(201).json({
             success: true,
-            message: 'User created successfully'
+            message: 'User created successfully',
+            user
         })
 
 
@@ -60,87 +59,47 @@ router.post('/login', async (req, res) => {
         if (!comparePassword) {
             return res.status(400).json({ message: 'email and password is incorrect' })
         }
+        user.password = undefined
 
+        // generating token 
+        const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXP })
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '40h' })
-        return res.status(200).json({
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            },
-            token
-        })
+        return res.cookie('token', token, { httpOnly: true, secure: true })
+            .status(200).json({
+                success: true, user, token
+            })
     } catch (error) {
         console.log(error);
         res.status(500).send('Server error in login')
     }
 })
 
+router.get('/logout', async (req, res) => {
+
+    return res.cookie('token', "", { httpOnly: true, secure: true, expires: new Date(0) })
+        .status(200).json({
+            success: true,
+        })
+})
 
 // @route GET /api/users/admin
 // @desc GET logged-in users profile (Projected Route)
 // @access Private 
 
-router.post('/admin-signup', async (req, res) => {
-    const { username, password, role } = req.body
 
-    try {
-        // Registration logic
-        let user = await Admin.findOne({ username })
-        if (user) {
-            return res.status(400).json({ message: 'user alredy exist' })
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10)
-
-        user = new Admin({ username, password: hashedPassword , role: 'admin' })
-
-        await user.save()
-
-
-        res.status(201).json({
-            success: true,
-            message: 'Admin User created successfully'
-        })
-
-
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).send('Server error register')
-
-
-    }
-})
-
-
-router.post('/admin-login', async (req, res) => {
-    const { username, password } = req.body
+router.get('/all-users', isAuthorized, isAdmin, async (req, res) => {
 
     try {
 
-        let admin = await Admin.findOne({ username })
+        let user = await User.find({}).select('-password')
 
-        if (!admin) return res.status(400).json({ message: 'Invalid Credintials in login' })
-
-        const comparePassword = await bcrypt.compare(password, admin.password)
-        if (!comparePassword) {
-            return res.status(400).json({ message: 'Invalid Credintials is match' })
-        }
+        if (!user) return res.status(400).json({ message: 'Invalid Credintials in login' })
 
 
-        const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '40h' })
-        return res.status(200).json({
-            user: {
-                id: admin._id,
-                name: admin.name,
-                email: admin.email,
-                role: admin.role
-            },
-            token
-        })
+        return res
+            .status(200).json({
+                success: true, user, total: user.length
+            })
     } catch (error) {
         console.log(error);
         res.status(500).send('Server error in login')

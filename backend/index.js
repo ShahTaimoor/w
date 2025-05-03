@@ -7,8 +7,8 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
-const settingRoutes = require('./routes/settingsRoutes');
-
+const categoryRoute = require('./routes/categoryRoutes')
+const cookirParser = require('cookie-parser')
 dotenv.config();
 
 const app = express();
@@ -19,7 +19,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-
+app.use(cookirParser())
 // Connect to Database
 connectDB();
 
@@ -29,7 +29,8 @@ app.use('/api', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api', orderRoutes);
 app.use('/api/upload', uploadRoutes);
-app.use('/api', settingRoutes);
+app.use('/api', categoryRoute);
+
 
 // Test Route
 app.get('/', (req, res) => {

@@ -1,10 +1,9 @@
 const express = require('express')
 const Cart = require('../models/Cart')
 const Product = require('../models/Product')
-const { protect } = require('../middleware/authMiddleware')
+
 
 const router = express.Router()
-
 
 // Helper function to get a cart by user Id or guest Id
 
@@ -184,7 +183,7 @@ router.get('/', async (req, res) => {
 // @desc MERGE guest cart for a guest or logged in user
 // @access Public
 
-router.post('/merge', protect, async (req, res) => {
+router.post('/merge', async (req, res) => {
     const { guestId } = req.body
     try {
         // Find the guest cart and user cart

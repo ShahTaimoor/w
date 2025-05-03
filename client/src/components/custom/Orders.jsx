@@ -1,36 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { Button } from '../ui/button';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import axios from 'axios';
 import { toast } from 'sonner';
+import OrderData from './OrderData';
+import { fetchOrdersAdmin } from '@/redux/slices/order/orderSlice';
+
 
 const Orders = () => {
-    const [orders, setOrders] = useState([]);
+    const dispatch = useDispatch();
+    const { orders, status, error } = useSelector((state) => state.orders);
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/get-all-orders`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`,
-                    },
-                });
-                setOrders(res.data.data);
-            } catch (error) {
-                console.error(error);
-                toast.error('Failed to fetch orders');
-            }
-        };
 
-        fetchOrders();
-    }, []);
+    // Fetch orders on component mount
+    useEffect(() => {
+        dispatch(fetchOrdersAdmin());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (status === 'failed') {
+            toast.error(error || 'Failed to fetch orders');
+        }
+    }, [status, error]);
 
     return (
         <div className="px-6 py-10">
             <h1 className="text-2xl font-bold mb-8">My Orders</h1>
 
-            {orders.length === 0 ? (
+            {status === 'loading' ? (
+                <div className="text-center text-gray-500">Loading orders...</div>
+            ) : orders.length === 0 ? (
                 <div className="text-center text-gray-500">No orders found.</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -49,7 +50,7 @@ const Orders = () => {
                             <div className="flex justify-between mb-4">
                                 <div>
                                     <p className="text-gray-500 text-sm">Total Amount</p>
-                                    <p className="text-lg font-bold text-green-600">${order.amount}</p>
+                                    <p className="text-lg font-bold text-green-600">Rs.{order.amount}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-500 text-sm">Items</p>
@@ -65,7 +66,11 @@ const Orders = () => {
                                         className="flex items-center gap-3 border-b pb-2 last:border-none"
                                     >
                                         <img
-                                            src={item.id?.images?.[0]?.[0]?.url || '/path/to/fallback-image.jpg'}
+                                             src={
+                                                item?.id?.picture?.secure_url
+                                                  ? item.id.picture.secure_url
+                                                  : "fallback.jpg"
+                                              }
                                             alt={item.id?.name || 'Product Image'}
                                             className="w-10 h-10 object-cover rounded-md"
                                         />
@@ -73,7 +78,7 @@ const Orders = () => {
                                             <p className="text-sm font-medium text-gray-800 truncate">{item.id?.name}</p>
                                             <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                                         </div>
-                                        <p className="text-sm font-semibold text-gray-700">${item.id?.price}</p>
+                                        <p className="text-sm font-semibold text-gray-700">Rs.{item.id?.price}</p>
                                     </div>
                                 ))}
                             </div>
@@ -97,27 +102,24 @@ const Orders = () => {
                                         </Button>
                                     </DialogTrigger>
 
-                                    <DialogContent className="sm:max-w-md">
+                                    <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
                                             <DialogTitle>Invoice Details</DialogTitle>
                                             <DialogDescription>
-                                                Here’s the customer information for this order.
+                                                Here’s the full invoice for this order.
                                             </DialogDescription>
                                         </DialogHeader>
 
-                                        {order.products.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center gap-3 border-b pb-2 last:border-none"
-                                            >
-
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-800 truncate">{item.id?.name}</p>
-                                                    <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                                                </div>
-                                                <p className="text-sm font-semibold text-gray-700">${item.id?.price}</p>
-                                            </div>
-                                        ))}
+                                        {selectedOrder && (
+                                            <OrderData
+                                                price={selectedOrder.amount}
+                                                address={selectedOrder.address}
+                                                createdAt={selectedOrder.createdAt}
+                                                products={selectedOrder.products}
+                                                paymentMethod={selectedOrder.paymentMethod || 'COD'}
+                                                status={selectedOrder.status || 'Pending'}
+                                            />
+                                        )}
                                     </DialogContent>
                                 </Dialog>
                             </div>

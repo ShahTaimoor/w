@@ -1,280 +1,155 @@
 import React, { useEffect, useState } from 'react';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { setProducts, updateProduct, deleteProduct } from '@/redux/slices/productSlice';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { removeFromCart } from '@/redux/slices/cartSlice';
+import { Input } from '../ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { Button } from '../ui/button';
+import { Loader2, Trash2, Edit, Search } from 'lucide-react';
+import { AllCategory } from '@/redux/slices/categories/categoriesSlice';
+import { fetchProducts } from '@/redux/slices/products/productSlice';
+import { useNavigate } from 'react-router-dom';
 
 const AllProducts = () => {
   const [category, setCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isEditModelOpen, setIsEditModelOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [editName, setEditName] = useState('');
-  const [editPrice, setEditPrice] = useState('');
-  const [editCategory, setEditCategory] = useState('');
-  const [editStock, setEditStock] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [noProductsFound, setNoProductsFound] = useState(false);
-  const [editImages, setEditImages] = useState([]);
-
   const dispatch = useDispatch();
-  const { products } = useSelector((state) => state.products);
+  const { categories } = useSelector(s => s.categories);
+  const { products, status } = useSelector(s => s.products);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const getFilterProducts = async () => {
-      setLoading(true);
-      setError(null);
-      setNoProductsFound(false);
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/get-products?category=${category}&search=${searchTerm}`
-        );
-        const fetchedProducts = res.data?.data || [];
-        dispatch(setProducts(fetchedProducts));
-        setNoProductsFound(fetchedProducts.length === 0);
-      } catch (error) {
-        toast('Category Not Found');
-        dispatch(setProducts([]));     
-        setNoProductsFound(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    getFilterProducts();
-  }, [searchTerm, category, dispatch]);
+    dispatch(AllCategory());
+  }, [dispatch]);
 
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setEditName(product.name);
-    setEditPrice(product.price);
-    setEditStock(product.stock);
-    setEditCategory(product.category);
-    setIsEditModelOpen(true);
-  };
+  useEffect(() => {
+    dispatch(fetchProducts({ category, searchTerm }));
+  }, [category, searchTerm, dispatch]);
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('name', editName);
-    formData.append('price', editPrice);
-    formData.append('stock', editStock);
-    formData.append('category', editCategory);
-
-    if (editImages.length > 0) {
-      editImages.forEach((file) => {
-        formData.append('images', file);
-      });
-    }
-
-    try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_URL}/update-product/${editingProduct._id}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      if (res.data.success) {
-        toast.success(`${editName} updated successfully`);
-        const updatedProduct = res.data.data;
-        dispatch(updateProduct(updatedProduct));
-
-        setIsEditModelOpen(false);
-        setEditImages([]);
-      }
-    } catch (error) {
-      toast.error('Failed to update product');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/delete-product/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      if (res.data.success) {
-        toast.success('Product deleted successfully');
-        dispatch(deleteProduct(id));
-      } else {
-        toast.error('Failed to delete product');
-      }
-    } catch (error) {
-      toast.error('Something went wrong');
-    }
-  };
+  const loading = status === 'loading';
+  const noProducts = status === 'succeeded' && products.length === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold mb-3">Explore Our Products</h1>
-        <p className="text-muted-foreground text-lg">Discover premium automotive accessories</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Header with title and actions */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
+        <Button onClick={() => navigate('/admin/dashboard/add-product')}>
+          Add New Product
+        </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-12">
-        <Input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search products..."
-          className="flex-1 h-12 rounded-lg border-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-primary"
-        />
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-full sm:w-48 h-12 rounded-lg border-muted-foreground/30">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="Perfume & Fragrances">Perfume & Fragrances</SelectItem>
-            <SelectItem value="Stickers Emblems Key Chains">Stickers Emblems Key Chains</SelectItem>
-            <SelectItem value="Interior">Interior</SelectItem>
-            <SelectItem value="Exterior">Exterior</SelectItem>
-            <SelectItem value="Security Badges">Security Badges</SelectItem>
-            <SelectItem value="Lightening">Lightening</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Search and filter section */}
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Search products by name..."
+              className="pl-9"
+            />
+          </div>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat._id} value={cat._id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Loader and Error Handling */}
+      {/* Status indicators */}
       {loading && (
-        <div className="flex justify-center items-center">
-          <Loader2 className="animate-spin text-gray-500" size={48} />
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="animate-spin h-10 w-10 text-primary mb-4" />
+          <p className="text-gray-600">Loading products...</p>
         </div>
       )}
 
-      {!loading && noProductsFound && (
-        <div className="text-center text-muted-foreground text-lg mt-4">
-          No products found for this category.
+      {noProducts && !loading && (
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <p className="text-gray-500 text-lg">No products found matching your criteria.</p>
+          <Button 
+            variant="ghost" 
+            className="mt-4"
+            onClick={() => {
+              setCategory('all');
+              setSearchTerm('');
+            }}
+          >
+            Reset filters
+          </Button>
         </div>
       )}
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {products?.map((item) => (
-          <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group">
-            <div className="aspect-square bg-muted/50">
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {products.map(product => (
+          <div 
+            key={product._id} 
+            className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+          >
+            <div className="relative aspect-square bg-gray-100">
               <img
-                src={item.image?.[0]?.url || '/fallback.jpg'}
-                alt={item.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                src={product.image || '/placeholder-product.png'}
+                alt={product.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = '/placeholder-product.png';
+                }}
               />
             </div>
-            <div className="p-5 flex flex-col gap-3">
-              <h3 className="text-lg font-semibold line-clamp-1">{item.name}</h3>
-              <div className="flex justify-between items-center">
-                <span className="text-primary text-xl font-bold">{`$${item.price}`}</span>
-                <span className="text-sm text-muted-foreground">{`Stock: ${item.stock}`}</span>
+            
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-medium text-gray-900 line-clamp-1">{product.title}</h3>
+                <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                  {product.category?.name || 'Uncategorized'}
+                </span>
               </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDelete(item._id)}
-                className="w-full mt-2"
-              >
-                Delete
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="w-full mt-2">
-                Edit
-              </Button>
+              
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-bold text-lg">${product.price}</span>
+                <span className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                </span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => navigate(`/admin/dashboard/update/${product._id}`)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to delete this product?")) {
+                      dispatch(deleteSingleProduct(product._id));
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Edit Product Modal */}
-      <Dialog open={isEditModelOpen} onOpenChange={setIsEditModelOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit}>
-            <div className="grid gap-6 py-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="stock">Stock</Label>
-                <Input
-                  id="stock"
-                  name="stock"
-                  type="number"
-                  value={editStock}
-                  onChange={(e) => setEditStock(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={editCategory} onValueChange={setEditCategory}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Perfume & Fragrances">Perfume & Fragrances</SelectItem>
-                    <SelectItem value="Stickers Emblems Key Chains">Stickers Emblems Key Chains</SelectItem>
-                    <SelectItem value="Interior">Interior</SelectItem>
-                    <SelectItem value="Exterior">Exterior</SelectItem>
-                    <SelectItem value="Security Badges">Security Badges</SelectItem>
-                    <SelectItem value="Lightening">Lightening</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="images">Images</Label>
-                <Input
-                  id="images"
-                  name="images"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setEditImages([...e.target.files])}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full">
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
