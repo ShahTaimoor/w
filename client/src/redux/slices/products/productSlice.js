@@ -50,30 +50,17 @@ export const updateSingleProduct = createAsyncThunk(
     }
 );
 
-<<<<<<< HEAD
 export const deleteSingleProduct = createAsyncThunk(
     'products/deleteSingleProduct',
     async (id, thunkAPI) => {
         try {
             const res = await productService.deleteProduct(id);
             return { id, ...res };
-=======
-export const deleteProduct = createAsyncThunk(
-    "products/deleteProduct",
-    async (id, thunkAPI) => {
-        try {
-            const res = await productService.deleteProduct(id);
-            return { id, message: res.message };
->>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
         } catch (error) {
             return thunkAPI.rejectWithValue(error);
         }
     }
-<<<<<<< HEAD
 )
-=======
-);
->>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
 
 const initialState = {
     products: [],
@@ -141,7 +128,6 @@ export const productsSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.payload;
             })
-<<<<<<< HEAD
             .addCase(deleteSingleProduct.pending, (state) => {
                 state.status = 'loading';
                 state.error = null;
@@ -151,17 +137,6 @@ export const productsSlice = createSlice({
                 state.products = state.products.filter(prod => prod._id !== action.payload.id);
             })
             .addCase(deleteSingleProduct.rejected, (state, action) => {
-=======
-            .addCase(deleteProduct.pending, (state) => {
-                state.status = 'loading';
-                state.error = null;
-            })
-            .addCase(deleteProduct.fulfilled, (state, action) => {
-                state.status = 'succeeded';
-                state.products = state.products.filter(prod => prod._id !== action.payload.id);
-            })
-            .addCase(deleteProduct.rejected, (state, action) => {
->>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
                 state.status = 'failed';
                 state.error = action.payload;
             })

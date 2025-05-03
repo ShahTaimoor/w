@@ -90,10 +90,6 @@ const updateProd = async ({ inputValues, id }) => {
     }
 };
 
-<<<<<<< HEAD
-=======
-
->>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
 // delete product
 const deleteProduct = async (id) => {
     try {
@@ -112,11 +108,6 @@ const deleteProduct = async (id) => {
     }
 };
 
-<<<<<<< HEAD
 const productService = { createProduct, allProduct, getSingleProd, updateProd,deleteProduct };
-=======
-
-const productService = { createProduct, allProduct, getSingleProd, updateProd, deleteProduct };
->>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
 
 export default productService;
