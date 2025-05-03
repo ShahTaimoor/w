@@ -1,23 +1,25 @@
 import axios from "axios";
 
-// Create Category
-const createCat = async (inputValues) => {
-    try {
-        const axiosResponse = await axios.post(
-            `${import.meta.env.VITE_API_URL}/create-category`,
-            inputValues,
-            {
-                withCredentials: true,
-                headers: { "Content-Type": "application/json" },
-            }
-        );
-        return axiosResponse.data;
-    } catch (error) {
-        const errorMessage =
-            error.response?.data?.message || error.message || 'Something went wrong';
-        return Promise.reject(errorMessage);
-    }
+// services/categoryService.js or similar
+
+export const createCat = async (formData) => {
+  try {
+    const axiosResponse = await axios.post(
+      `${import.meta.env.VITE_API_URL}/create-category`,
+      formData,
+      {
+        withCredentials: true,
+        // Don't manually set multipart headers; Axios handles this.
+      }
+    );
+    return axiosResponse.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message || error.message || 'Something went wrong';
+    return Promise.reject(errorMessage);
+  }
 };
+
 
 // Update Category
 const updateCat = async ({ name, slug }) => {

@@ -2,19 +2,22 @@ const express = require('express');
 const Category = require('../models/Category');
 const slugify = require('slugify');
 const { isAuthorized, isAdmin } = require('../middleware/authMiddleware');
+const { uploadImageOnCloudinary, deleteImageOnCloudinary } = require('../utils/cloudinary');
+const upload = require('../middleware/multer');
 
 const router = express.Router();
 
 // Create category
-router.post('/create-category', isAuthorized, isAdmin, async (req, res) => {
-   
+router.post('/create-category', upload.single('picture'), isAuthorized, isAdmin, async (req, res) => {
+
     try {
         const { name } = req.body;
-
+        const picturePath = req.file?.path;
         // Check if category name is provided
         if (!name) {
             return res.status(400).json({ success: false, message: 'Category name is required' });
         }
+
 
         // Check if category already exists
         const existingCategory = await Category.findOne({ name: { $regex: `^${name}$`, $options: 'i' } });
@@ -22,8 +25,19 @@ router.post('/create-category', isAuthorized, isAdmin, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Category already exists' });
         }
 
+        // Cloudinary image upload
+        const { secure_url, public_id } = await uploadImageOnCloudinary(picturePath, "products");
+        // Check if the image upload was successful
+        if (!secure_url || !public_id) {
+            return res.status(500).json({
+                success: false,
+                message: 'Error while uploading image',
+                error: 'Cloudinary upload failed'
+            });
+        }
         const newCategory = await Category.create({
             name,
+            picture: { secure_url, public_id },
             slug: slugify(name, { lower: true, strict: true })
         });
 
@@ -40,8 +54,8 @@ router.post('/create-category', isAuthorized, isAdmin, async (req, res) => {
 });
 
 // Update category
-router.put('/update-category/:slug', isAuthorized, isAdmin,async (req, res) => {
-    
+router.put('/update-category/:slug', isAuthorized, isAdmin, async (req, res) => {
+
 
     try {
         const { name } = req.body;
@@ -78,8 +92,8 @@ router.put('/update-category/:slug', isAuthorized, isAdmin,async (req, res) => {
 
 
 // Delete category
-router.delete('/delete-category/:slug', isAuthorized, isAdmin,async (req, res) => {
- 
+router.delete('/delete-category/:slug', isAuthorized, isAdmin, async (req, res) => {
+
 
     try {
         const { slug } = req.params;
@@ -89,7 +103,11 @@ router.delete('/delete-category/:slug', isAuthorized, isAdmin,async (req, res) =
         if (!deletedCategory) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        // delete cloudinary image 
 
+        if (deletedCategory.picture && deletedCategory.picture.public_id) {
+            await deleteImageOnCloudinary(deletedCategory.picture.public_id)
+        }
         return res.status(200).json({
             success: true,
             message: 'Category deleted successfully',

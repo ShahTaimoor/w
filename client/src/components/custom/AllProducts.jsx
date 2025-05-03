@@ -51,7 +51,7 @@ const AllProducts = () => {
             <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search By Name"
+              placeholder="Search by name, category..."
               className="pl-9"
             />
           </div>

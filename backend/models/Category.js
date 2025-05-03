@@ -14,6 +14,16 @@ const categorySchema = new mongoose.Schema({
         required: true,
         lowercase: true
     },
+    picture: {
+        secure_url: {
+            type: String,
+            required: true
+        },
+        public_id: {
+            type: String,
+            required: true
+        },
+    },
 
 
 
