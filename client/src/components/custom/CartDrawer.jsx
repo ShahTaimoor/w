@@ -18,18 +18,16 @@ import { toast } from 'sonner';
 
 const CartDrawer = () => {
     const { cartItems, totalQuantity, totalPrice } = useSelector((state) => state.cart);
-    const { isAuthenticated } = useSelector((state) => state.auth);
+    console.log(cartItems);
+    
+    const { user } = useSelector((state) => state.auth);
     const navigate = useNavigate();
     const [isProcessing, setIsProcessing] = useState(false);
     const [stockErrors, setStockErrors] = useState([]);
-    const [address, setAddress] = useState(''); // State to handle address input
-
-    const handleAddressChange = (e) => {
-        setAddress(e.target.value);
-    };
+   
 
     const handleBuyNow = async () => {
-        if (!isAuthenticated) return navigate('/login');
+        if (!user) return navigate('/login');
 
         if (cartItems.length === 0) {
             toast.error('Your cart is empty.');

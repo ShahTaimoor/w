@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema(
     {
@@ -11,9 +10,6 @@ const userSchema = new mongoose.Schema(
         email: {
             type: String,
             required: true,
-            trim: true,
-            unique: true,
-           
         },
         password: {
             type: String,
@@ -21,16 +17,9 @@ const userSchema = new mongoose.Schema(
             minLength: 6,
         },
         role: {
-            type: String,
-            enum: ['user']
-
+            type: Number,
+            default: 0
         },
-        purchasedProducts: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Product'
-            }
-        ]
     },
     { timestamps: true }
 )

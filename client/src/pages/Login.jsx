@@ -3,49 +3,50 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import { setUserLogin } from '@/redux/slices/authSlice'
 import axios from 'axios'
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { login } from '@/redux/slices/auth/authSlice'
 
 const Login = () => {
   const dispatch = useDispatch()
-  const [enabled, setEnable] = useState(false)
+
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const navigate = useNavigate()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const { email, password } = e.target.elements
+  const [inputValue, setInputValues] = useState({})
 
-    if (email.value.trim() === '' || password.value.trim() === '') {
-      toast("Please fill all the fields")
-      return
-    }
-
-    setLoading(true)
-    setErrorMsg('')
-
-    try {
-      const res = await axios.post(import.meta.env.VITE_API_URL + '/login', {
-        email: email.value,
-        password: password.value
-      })
-
-      const data = res.data
-      dispatch(setUserLogin(data))
-      toast.success('Logged in successfully')
-      navigate('/')
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed. Please try again.'
-      setErrorMsg(errorMessage)
-    } finally {
-      setLoading(false)
-    }
+  const handleChange = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+    setInputValues((values) => ({ ...values, [name]: value }));
   }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    dispatch(login(inputValue))
+      .unwrap()
+      .then((response) => {
+        if (response?.success === true) {
+          toast.success(response?.message);
+          setInputValues({});
+          navigate('/')
+        } else {
+          toast.error(response?.message || 'Failed to user login');
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        toast.error(error || 'Failed to user login');
+        setLoading(false);
+      });
+  };
+
 
   return (
     <div className='w-full mx-auto md:w-1/2 flex flex-col justify-center items-center p-8 md:p-12'>
@@ -68,29 +69,18 @@ const Login = () => {
 
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Email</label>
-          <Input placeholder='Enter Your Email' type='email' name='email' />
+          <Input placeholder='Enter Your Name' type='text' name='email' value={inputValue.email} onChange={handleChange} />
         </div>
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Password</label>
-          <Input placeholder='Enter Your Password' type='password' name='password' />
+          <Input placeholder='Enter Your Password' type='password' name='password' value={inputValue.password} onChange={handleChange} />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="terms" 
-            onCheckedChange={(checked) => setEnable(checked)}
-          />
-          <label
-            htmlFor="terms"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Accept terms and conditions
-          </label>
-        </div>
 
-        <Button 
-          className="w-full mt-4" 
-          disabled={!enabled || loading}
+
+        <Button
+          className="w-full mt-4"
+          disabled={loading}
           type="submit"
         >
           {loading ? (

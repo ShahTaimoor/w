@@ -1,280 +1,191 @@
 import React, { useEffect, useState } from 'react';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { setProducts, updateProduct, deleteProduct } from '@/redux/slices/productSlice';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import { removeFromCart } from '@/redux/slices/cartSlice';
+import { Input } from '../ui/input';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { Button } from '../ui/button';
+import { Loader2, Trash2, Plus, Search, Filter, PackageSearch, Pencil } from 'lucide-react';
+import { AllCategory } from '@/redux/slices/categories/categoriesSlice';
+import { deleteProduct, fetchProducts } from '@/redux/slices/products/productSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Card } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Skeleton } from '../ui/skeleton';
 
 const AllProducts = () => {
   const [category, setCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isEditModelOpen, setIsEditModelOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [editName, setEditName] = useState('');
-  const [editPrice, setEditPrice] = useState('');
-  const [editCategory, setEditCategory] = useState('');
-  const [editStock, setEditStock] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [noProductsFound, setNoProductsFound] = useState(false);
-  const [editImages, setEditImages] = useState([]);
-
   const dispatch = useDispatch();
-  const { products } = useSelector((state) => state.products);
+  const { categories } = useSelector(s => s.categories);
+  const { products, status } = useSelector(s => s.products);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const getFilterProducts = async () => {
-      setLoading(true);
-      setError(null);
-      setNoProductsFound(false);
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/get-products?category=${category}&search=${searchTerm}`
-        );
-        const fetchedProducts = res.data?.data || [];
-        dispatch(setProducts(fetchedProducts));
-        setNoProductsFound(fetchedProducts.length === 0);
-      } catch (error) {
-        toast('Category Not Found');
-        dispatch(setProducts([]));     
-        setNoProductsFound(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    getFilterProducts();
-  }, [searchTerm, category, dispatch]);
+    dispatch(AllCategory());
+  }, [dispatch]);
 
-  const handleEdit = (product) => {
-    setEditingProduct(product);
-    setEditName(product.name);
-    setEditPrice(product.price);
-    setEditStock(product.stock);
-    setEditCategory(product.category);
-    setIsEditModelOpen(true);
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(fetchProducts({ category, searchTerm }));
+    }, 300); // Debounce search by 300ms
+    return () => clearTimeout(timer);
+  }, [category, searchTerm, dispatch]);
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('name', editName);
-    formData.append('price', editPrice);
-    formData.append('stock', editStock);
-    formData.append('category', editCategory);
-
-    if (editImages.length > 0) {
-      editImages.forEach((file) => {
-        formData.append('images', file);
-      });
-    }
-
-    try {
-      const res = await axios.put(
-        `${import.meta.env.VITE_API_URL}/update-product/${editingProduct._id}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      if (res.data.success) {
-        toast.success(`${editName} updated successfully`);
-        const updatedProduct = res.data.data;
-        dispatch(updateProduct(updatedProduct));
-
-        setIsEditModelOpen(false);
-        setEditImages([]);
-      }
-    } catch (error) {
-      toast.error('Failed to update product');
+  const handleDelete = (id) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      dispatch(deleteProduct(id));
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/delete-product/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-
-      if (res.data.success) {
-        toast.success('Product deleted successfully');
-        dispatch(deleteProduct(id));
-      } else {
-        toast.error('Failed to delete product');
-      }
-    } catch (error) {
-      toast.error('Something went wrong');
-    }
-  };
+  const loading = status === 'loading';
+  const noProducts = status === 'succeeded' && products.length === 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10">
-      {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold mb-3">Explore Our Products</h1>
-        <p className="text-muted-foreground text-lg">Discover premium automotive accessories</p>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Header with search and filters */}
+      <div className="mb-8">
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-12">
-        <Input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search products..."
-          className="flex-1 h-12 rounded-lg border-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-primary"
-        />
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-full sm:w-48 h-12 rounded-lg border-muted-foreground/30">
-            <SelectValue placeholder="All Categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="Perfume & Fragrances">Perfume & Fragrances</SelectItem>
-            <SelectItem value="Stickers Emblems Key Chains">Stickers Emblems Key Chains</SelectItem>
-            <SelectItem value="Interior">Interior</SelectItem>
-            <SelectItem value="Exterior">Exterior</SelectItem>
-            <SelectItem value="Security Badges">Security Badges</SelectItem>
-            <SelectItem value="Lightening">Lightening</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* Loader and Error Handling */}
-      {loading && (
-        <div className="flex justify-center items-center">
-          <Loader2 className="animate-spin text-gray-500" size={48} />
-        </div>
-      )}
-
-      {!loading && noProductsFound && (
-        <div className="text-center text-muted-foreground text-lg mt-4">
-          No products found for this category.
-        </div>
-      )}
-
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {products?.map((item) => (
-          <div key={item._id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 group">
-            <div className="aspect-square bg-muted/50">
-              <img
-                src={item.image?.[0]?.url || '/fallback.jpg'}
-                alt={item.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            </div>
-            <div className="p-5 flex flex-col gap-3">
-              <h3 className="text-lg font-semibold line-clamp-1">{item.name}</h3>
-              <div className="flex justify-between items-center">
-                <span className="text-primary text-xl font-bold">{`$${item.price}`}</span>
-                <span className="text-sm text-muted-foreground">{`Stock: ${item.stock}`}</span>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDelete(item._id)}
-                className="w-full mt-2"
-              >
-                Delete
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="w-full mt-2">
-                Edit
-              </Button>
-            </div>
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search By Name"
+              className="pl-9"
+            />
           </div>
+
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-[180px]">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <SelectValue placeholder="All Categories" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map(cat => (
+                <SelectItem key={cat._id} value={cat._id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Status indicators */}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <Skeleton className="h-48 w-full" />
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {noProducts && !loading && (
+        <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+          <PackageSearch className="h-12 w-12 text-muted-foreground" />
+          <h3 className="text-lg font-medium">No products found</h3>
+          <p className="text-sm text-muted-foreground">
+            {searchTerm ? 'Try adjusting your search or filter' : 'Add a new product to get started'}
+          </p>
+          <Button
+            onClick={() => {
+              setSearchTerm('');
+              setCategory('all');
+            }}
+            variant="outline"
+            className="mt-4"
+          >
+            Clear filters
+          </Button>
+        </div>
+      )}
+
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {products.map(p => (
+          <Card key={p._id} className="group overflow-hidden transition-shadow hover:shadow-lg">
+            <div className="relative aspect-square overflow-hidden">
+              <img
+                src={p.image || '/placeholder-product.jpg'}
+                alt={p.title}
+                width={1600}
+                height={1600}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder-product.jpg';
+                }}
+              />
+              {p.stock <= 0 && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Badge variant="destructive">Out of Stock</Badge>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="flex justify-between items-start gap-2">
+                <h3 className="font-medium line-clamp-2" title={p.title}>
+                  {p.title}
+                </h3>
+                <Badge variant="outline" className="font-medium">
+                  ${p.price}
+                </Badge>
+              </div>
+
+              {p.category?.name && (
+                <p className="text-sm text-muted-foreground">{p.category.name}</p>
+              )}
+
+              <div className="flex items-center gap-2 text-sm">
+                <span className={`inline-block h-2 w-2 rounded-full ${p.stock > 10 ? 'bg-green-500' : p.stock > 0 ? 'bg-amber-500' : 'bg-red-500'
+                  }`} />
+                <span className="text-muted-foreground">
+                  {p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}
+                </span>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={() => navigate(`/admin/dashboard/update/${p._id}`)}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </Button>
+                <Button
+                  onClick={() => handleDelete(p._id)}
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1 gap-2"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </Card>
         ))}
       </div>
-
-      {/* Edit Product Modal */}
-      <Dialog open={isEditModelOpen} onOpenChange={setIsEditModelOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit}>
-            <div className="grid gap-6 py-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="price">Price</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="stock">Stock</Label>
-                <Input
-                  id="stock"
-                  name="stock"
-                  type="number"
-                  value={editStock}
-                  onChange={(e) => setEditStock(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="category">Category</Label>
-                <Select value={editCategory} onValueChange={setEditCategory}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Perfume & Fragrances">Perfume & Fragrances</SelectItem>
-                    <SelectItem value="Stickers Emblems Key Chains">Stickers Emblems Key Chains</SelectItem>
-                    <SelectItem value="Interior">Interior</SelectItem>
-                    <SelectItem value="Exterior">Exterior</SelectItem>
-                    <SelectItem value="Security Badges">Security Badges</SelectItem>
-                    <SelectItem value="Lightening">Lightening</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="images">Images</Label>
-                <Input
-                  id="images"
-                  name="images"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setEditImages([...e.target.files])}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="w-full">
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

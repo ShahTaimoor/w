@@ -9,39 +9,36 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import axios from 'axios'
 
 const Signup = () => {
-  const [enabled, setEnable] = useState(false)
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const [inputValue, setInputValues] = useState({
+    name: '',
+    email: '',
+    password: ''
+  })
+
+  const handleChange = (e) => {
+    const name = e.target.name;
+    const value = e.target.value;
+    setInputValues((values) => ({ ...values, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const { name, email, password } = e.target.elements
-
-    if (name.value.trim() === '' || email.value.trim() === '' || password.value.trim() === '') {
-      toast.error("Please fill all the fieldd")
-      return
-    }
-
-    setLoading(true)
-    setError('')
-
-    try {
-      const res = await axios.post(import.meta.env.VITE_API_URL + '/signup', {
-        name: name.value,
-        email: email.value,
-        password: password.value
+    axios
+      .post(import.meta.env.VITE_API_URL + '/signup', inputValue, {
+        headers: { "Content-Type": "application/json" }
       })
+      .then((response) => {
+        console.log(response);
+        navigate('/login')
+      })
+      .catch((error) => {
+        console.log(error);
 
-      toast.success('Account created successfully!')
-      navigate('/login')
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.'
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
+      })
   }
 
   return (
@@ -64,29 +61,17 @@ const Signup = () => {
 
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Name</label>
-          <Input placeholder='Enter Your Name' type='text' name='name' />
+          <Input onChange={handleChange} placeholder='Enter Your Name' type='text' name='name' value={inputValue.name} />
         </div>
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Email</label>
-          <Input placeholder='Enter Your Email' type='email' name='email' />
+          <Input onChange={handleChange} placeholder='Enter Your Email' type='text' name='email' value={inputValue.email} />
         </div>
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Password</label>
-          <Input placeholder='Enter Your Password' type='password' name='password' />
+          <Input onChange={handleChange} placeholder='Enter Your Password' type='password' name='password' value={inputValue.password} />
         </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="terms" 
-            onCheckedChange={(checked) => setEnable(checked)}
-          />
-          <label
-            htmlFor="terms"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Accept terms and conditions
-          </label>
-        </div>
-        <Button className='w-full mt-4' disabled={!enabled || loading}>
+        <Button className='w-full mt-4' disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
