@@ -14,7 +14,10 @@ const items = [
     { title: "Orders", url: "/admin/dashboard/orders", icon: PackageSearch },
     { title: "Analytics", url: "/admin/dashboard/analytics", icon: ChartBar },
     { title: "Users", url: "/admin/dashboard/users", icon: ChartBar },
+<<<<<<< HEAD
     { title: "Shop", url: "/", icon: ChartBar },
+=======
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
  
 ];
 

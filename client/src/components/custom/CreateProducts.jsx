@@ -58,6 +58,7 @@ const CreateProducts = () => {
                 setLoading(false);
             });
     };
+<<<<<<< HEAD
 
 
 
@@ -126,4 +127,107 @@ const CreateProducts = () => {
     )
 }
 
+=======
+
+
+
+
+    useEffect(() => {
+        dispatch(AllCategory());
+    }, [dispatch]);
+
+
+    return (
+        <Card className="w-full max-w-4xl md:mx-8 mt-6 px-4 sm:px-6 lg:px-8">
+  <CardHeader>
+    <CardTitle>Create Product</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <form onSubmit={handleSubmit} encType="multipart/form-data">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="title">Product Title</Label>
+          <Input
+            value={inputValues.title}
+            onChange={handleChange}
+            id="title"
+            type="text"
+            name="title"
+            placeholder="Product Title"
+          />
+        </div>
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="price">Product Price</Label>
+          <Input
+            value={inputValues.price}
+            onChange={handleChange}
+            id="price"
+            type="number"
+            name="price"
+            placeholder="Product Price"
+          />
+        </div>
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="category">Category</Label>
+          <Select onValueChange={handleCategoryChange}>
+            <SelectTrigger id="category">
+              <SelectValue placeholder="Select Category" />
+            </SelectTrigger>
+            <SelectContent position="popper">
+              {categories?.map((category) => (
+                <SelectItem key={category._id} value={category._id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-col space-y-1.5">
+          <Label htmlFor="picture">Upload Image</Label>
+          <Input
+            onChange={(e) =>
+              handleChange({
+                target: {
+                  name: 'picture',
+                  value: e.target.files[0],
+                },
+              })
+            }
+            id="picture"
+            type="file"
+            name="picture"
+          />
+        </div>
+        <div className="flex flex-col space-y-1.5 md:col-span-2">
+          <Label htmlFor="description">Product Description</Label>
+          <Input
+            value={inputValues.description}
+            onChange={handleChange}
+            id="description"
+            name="description"
+            placeholder="Product description"
+          />
+        </div>
+        <div className="flex flex-col space-y-1.5 md:col-span-2">
+          <Label htmlFor="stock">Product Stock</Label>
+          <Input
+            value={inputValues.stock}
+            onChange={handleChange}
+            id="stock"
+            name="stock"
+            placeholder="Product stock"
+          />
+        </div>
+      </div>
+      <Button type="submit" className="mt-6 w-full sm:w-auto" disabled={loading}>
+        {loading ? 'Adding...' : 'Add Product'}
+      </Button>
+    </form>
+  </CardContent>
+</Card>
+
+    )
+}
+
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
 export default CreateProducts

@@ -8,7 +8,7 @@ const router = express.Router();
 
 // @route POST /api/orders
 // @desc Place a new order (COD)
-// @access Private
+// @access Privat
 
 router.post('/order', isAuthorized, async (req, res) => {
   try {

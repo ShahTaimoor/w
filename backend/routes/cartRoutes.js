@@ -5,7 +5,11 @@ const Product = require('../models/Product')
 
 const router = express.Router()
 
+<<<<<<< HEAD
 // Helper function to get a cart by user Id or guest Id
+=======
+// Helper function to get a cart by user Id or guest 
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
 
 const getCart = async (userId, guestId) => {
     if (userId) {
@@ -16,9 +20,7 @@ const getCart = async (userId, guestId) => {
     return null
 }
 
-// @route POST /api/cart
-// @desc Add a product to the cart for a guest or logged in user
-// @access Public
+
 
 router.post('/', async (req, res) => {
     const { productId, quantity, size, color, guestId, userId } = req.body

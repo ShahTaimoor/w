@@ -4,9 +4,15 @@ import categoryService from "./categoriesService";
 
 export const AddCategory = createAsyncThunk(
     'categories/addCategory',
+<<<<<<< HEAD
     async (inputValues, thunkAPI) => {
         try {
             const res = await categoryService.createCat(inputValues);
+=======
+    async (formData, thunkAPI) => {
+        try {
+            const res = await categoryService.createCat(formData);
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
             return res;
         } catch (error) {
             return thunkAPI.rejectWithValue(error);

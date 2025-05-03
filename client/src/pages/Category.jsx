@@ -63,7 +63,11 @@ const Category = () => {
     }
   };
 
+<<<<<<< HEAD
  
+=======
+  console.log(categories);  
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
   const addNewCategory = () => {
     if (!inputValues.name.trim()) {
       toast.error('Category name cannot be empty');
@@ -274,7 +278,12 @@ const Category = () => {
                     </TableCell>
                     <TableCell>
                       <img
+<<<<<<< HEAD
                         src={category.image}
+=======
+                        src={category.picture?.
+                          secure_url}
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
                         alt={category.name}
                         className="h-10 w-10 rounded object-cover"
                       />
@@ -328,4 +337,8 @@ const Category = () => {
   );
 };
 
+<<<<<<< HEAD
 export default Category;
+=======
+export default Category;
+>>>>>>> fb2e911b0f8a9fc050f3f6a9b045faf3b37004e0
