@@ -63,7 +63,7 @@ const Checkout = () => {
     <div className='mx-auto max-w-6xl px-4 sm:px-8 py-12'>
       <div className='flex flex-col sm:flex-row gap-10'>
 
-        {/* LEFT: Order Summary */}
+        {/* LEFT: Order Summar */}
         <div className='sm:w-2/3 space-y-6'>
           <h2 className='text-2xl font-semibold text-gray-800'>Order Summary</h2>
           <Card className="p-6 space-y-4">
