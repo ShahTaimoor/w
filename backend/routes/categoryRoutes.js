@@ -47,7 +47,7 @@ router.post('/create-category', upload.single('picture'), isAuthorized, isAdmin,
     }
 });
 
-// Update category
+// Update categor
 router.put('/update-category/:slug', upload.single('picture'), isAuthorized, isAdmin, async (req, res) => {
     try {
         const { name } = req.body;
