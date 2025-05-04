@@ -109,7 +109,8 @@ const Category = () => {
       .then((response) => {
         if (response?.success) {
           toast.success(response?.message);
-          setEditingCategory(null);
+          setEditingCategory({ ...categories, picture: null });
+
           dispatch(AllCategory());
         } else {
           toast.error(response?.message || 'Failed to update category');
@@ -193,23 +194,93 @@ const Category = () => {
               />
             </div>
             <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="picture">Upload Image</Label>
-              <Input
-                id="picture"
-                type="file"
-                name="picture"
-                onChange={handleChange}
-              />
-              {/* Image preview */}
-              {inputValues.picture && (
-                <div className="mt-2">
-                  <img
-                    src={URL.createObjectURL(inputValues.picture)}
-                    alt="Image Preview"
-                    className="w-32 h-32 object-cover rounded"
-                  />
+              <div className="space-y-4">
+                {/* File Upload Area */}
+                <div className="space-y-2">
+                  <Label htmlFor="picture" className="block text-sm font-medium text-gray-700">
+                    Upload Image
+                    <span className="ml-1 text-red-500">*</span>
+                  </Label>
+
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 transition-colors duration-200">
+                    <div className="space-y-1 text-center">
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <div className="flex text-sm text-gray-600">
+                        <label
+                          htmlFor="picture"
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
+                        >
+                          <span>Upload a file</span>
+                          <input
+                            id="picture"
+                            name="picture"
+                            type="file"
+                            className="sr-only"
+                            onChange={handleChange}
+                            accept="image/*"
+                          />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF, WEBP up to 5MB
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+
+                {/* Image preview */}
+                {inputValues.picture && (
+                  <div className="mt-2">
+                    <img
+                      src={URL.createObjectURL(inputValues.picture)}
+                      alt="Image Preview"
+                      className="w-32 h-32 object-cover rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editingCategory) {
+                          setEditingCategory({ ...editingCategory, picture: null });
+                        } else {
+                          setInputValues(v => ({ ...v, picture: null }));
+                        }
+                      }}
+                      className="text-sm font-medium text-red-600 hover:text-red-500"
+                    >
+                      Remove Image
+                    </button>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p className="truncate max-w-[200px]">
+                        <span className="font-medium">Name:</span> {inputValues.picture.name}
+                      </p>
+                      <p>
+                        <span className="font-medium">Size:</span> {(inputValues.picture.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                      <p>
+                        <span className="font-medium">Type:</span> {inputValues.picture.type.split('/')[1].toUpperCase()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+
+              </div>
+
             </div>
 
             <div className="flex space-x-2">
@@ -269,6 +340,7 @@ const Category = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Image</TableHead>
                   <TableHead>Slug</TableHead>
@@ -276,8 +348,12 @@ const Category = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((category) => (
+                {categories.map((category,index) => (
                   <TableRow key={category._id}>
+
+                    <TableCell>
+                     <span>{index + 1}</span>
+                    </TableCell>
                     <TableCell className="font-medium">
                       {editingCategory?.slug === category.slug ? (
                         <span className="text-primary">{category.name}</span>

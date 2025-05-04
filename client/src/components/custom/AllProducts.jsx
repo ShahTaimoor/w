@@ -50,13 +50,7 @@ const AllProducts = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
-        <Button onClick={() => navigate('/admin/dashboard/add-product')}>
-          Add New Product
-        </Button>
-      </div>
+      <h1 className='text-2xl mb-5'>All Products</h1>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
@@ -171,13 +165,12 @@ const AllProducts = () => {
 
                 <div className="flex items-center gap-2 text-sm">
                   <span
-                    className={`inline-block h-2 w-2 rounded-full ${
-                      p.stock > 10
+                    className={`inline-block h-2 w-2 rounded-full ${p.stock > 10
                         ? 'bg-green-500'
                         : p.stock > 0
-                        ? 'bg-amber-500'
-                        : 'bg-red-500'
-                    }`}
+                          ? 'bg-amber-500'
+                          : 'bg-red-500'
+                      }`}
                   />
                   <span className="text-muted-foreground">
                     {p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'}

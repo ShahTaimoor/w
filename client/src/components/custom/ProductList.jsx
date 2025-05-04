@@ -15,7 +15,7 @@ import { Loader2 } from 'lucide-react';
 const ProductList = () => {
   const [category, setCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [quantities, setQuantities] = useState({}); // Track quantity per product
+  const [quantities, setQuantities] = useState({});
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -23,7 +23,6 @@ const ProductList = () => {
   const { products, status } = useSelector(s => s.products);
   const { user } = useSelector((state) => state.auth);
 
-  // Function to chunk the categories array into chunks (7 for the first page, 8 for others)
   const chunkArray = (array, size) => {
     const result = [];
     for (let i = 0; i < array.length; i += size) {
@@ -32,7 +31,16 @@ const ProductList = () => {
     return result;
   };
 
-  // Initialize quantities when products load
+  const combinedCategories = [
+    {
+      _id: 'all',
+      name: 'All',
+      image: 'https://cdn.pixabay.com/photo/2023/07/19/12/16/car-8136751_1280.jpg',
+    },
+    ...categories,
+  ];
+  const categoryChunks = chunkArray(combinedCategories, 8);
+
   useEffect(() => {
     if (products.length > 0) {
       const initialQuantities = {};
@@ -43,20 +51,15 @@ const ProductList = () => {
     }
   }, [products]);
 
-  // handle quantity change for a product
   const handleQuantityChange = (productId, value, stock) => {
     let newValue = parseInt(value) || 0;
-
-    // Ensure value is between 0 and stock
     newValue = Math.max(0, Math.min(newValue, stock));
-
     setQuantities(prev => ({
       ...prev,
-      [productId]: newValue
+      [productId]: newValue,
     }));
   };
 
-  // handle adding to the cart
   const handleAddToCart = async (product) => {
     if (!user) {
       toast.warning('You must login first');
@@ -84,11 +87,9 @@ const ProductList = () => {
 
     setIsAddingToCart(false);
     toast.success('Product added to cart');
-    // Reset quantity after adding to cart
     setQuantities(prev => ({ ...prev, [product._id]: 0 }));
   };
 
-  // Fetch categories and products based on the filters
   useEffect(() => {
     dispatch(AllCategory());
   }, [dispatch]);
@@ -98,43 +99,20 @@ const ProductList = () => {
   }, [category, searchTerm, dispatch]);
 
   const loadingProducts = status === 'loading';
-  const noProducts = status === 'succeeded' && products.length === 0;
-
-  // Chunk the categories into groups
-  const firstPageChunk = chunkArray(categories, 7);  // First page shows 7 categories
-  const otherPageChunks = chunkArray(categories.slice(7), 8);  // Other pages show 8 categories
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10">
 
-      {/* Category List as Images */}
+      {/* Category Swiper */}
       <Swiper
         pagination={true}
         modules={[Pagination]}
         className="mySwiper"
         spaceBetween={10}
       >
-        {/* Add the "All" category to the beginning */}
-        {[...firstPageChunk, ...otherPageChunks].map((chunk, index) => (
+        {categoryChunks.map((chunk, index) => (
           <SwiperSlide key={index}>
             <div className="grid grid-cols-4 gap-4 pb-4 mb-6">
-              {/* If chunk is the first one, add the "All" category */}
-              {index === 0 && (
-                <div
-                  className={`cursor-pointer flex flex-col items-center w-24 text-center p-2 ${category === 'all' ? 'border-b' : 'bg-white'}`}
-                  onClick={() => setCategory('all')}
-                >
-                  <div className="flex justify-center">
-                    <img
-                      src="https://cdn.pixabay.com/photo/2023/07/19/12/16/car-8136751_1280.jpg"
-                      alt="All"
-                      className="w-12 rounded-full h-12 object-cover"
-                    />
-                  </div>
-                  <p className="text-sm mt-1 text-center w-full">All</p>
-                </div>
-              )}
-              {/* Render the remaining categories */}
               {chunk.map(cat => (
                 <div
                   key={cat._id}
@@ -156,7 +134,7 @@ const ProductList = () => {
         ))}
       </Swiper>
 
-      {/* Search + Category Filters */}
+      {/* Search Input */}
       <Input
         value={searchTerm}
         onChange={e => setSearchTerm(e.target.value)}
@@ -164,14 +142,22 @@ const ProductList = () => {
         className="flex-1 mb-5"
       />
 
-      {/* Loading & Empty States */}
+      {/* Loading Spinner */}
       {loadingProducts && (
         <div className="flex justify-center py-10">
           <Loader2 className="animate-spin" size={32} />
         </div>
       )}
-      {noProducts && !loadingProducts && (
-        <p className="text-center text-lg text-gray-500">No products found.</p>
+
+      {/* No Products Found Message */}
+      { products.length === 0 && (
+        <p className="text-center text-lg text-gray-500 mb-10">
+          {category === 'all' && searchTerm === ''
+            ? 'No products found.'
+            : category !== 'all' && searchTerm === ''
+              ? 'No products found in this category.'
+              : 'No products match your search.'}
+        </p>
       )}
 
       {/* Product Grid */}
@@ -179,8 +165,8 @@ const ProductList = () => {
         {products.map(product => (
           <div key={product._id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
             <img
-            width={1600}
-            height={1600}
+              width={1600}
+              height={1600}
               src={product.image || '/fallback.jpg'}
               alt={product.title}
               className="w-full object-cover"
