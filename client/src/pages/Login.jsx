@@ -1,9 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
-import axios from 'axios'
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
@@ -47,7 +45,6 @@ const Login = () => {
       });
   };
 
-
   return (
     <div className='w-full mx-auto md:w-1/2 flex flex-col justify-center items-center p-8 md:p-12'>
       <form onSubmit={handleSubmit} className='w-full max-w-md bg-white p-8 rounded-lg border shadow-sm'>
@@ -59,7 +56,7 @@ const Login = () => {
           Enter your details to Login
         </p>
 
-        {/* Show Error Message if ay */}
+        {/* Show Error Message if any */}
         {errorMsg && (
           <Alert variant="destructive" className="mb-6">
             <AlertTitle>Login Error</AlertTitle>
@@ -68,15 +65,13 @@ const Login = () => {
         )}
 
         <div className='mb-4'>
-          <label className='block text-sm font-semibold mb-2'>Email</label>
-          <Input placeholder='Enter Your Name' type='text' name='email' value={inputValue.email} onChange={handleChange} />
+          <label className='block text-sm font-semibold mb-2'>Name</label> {/* Changed label to 'Name' */}
+          <Input placeholder='Enter Your Name' type='text' name='name' value={inputValue.name} onChange={handleChange} /> {/* Changed 'email' to 'name' */}
         </div>
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Password</label>
           <Input placeholder='Enter Your Password' type='password' name='password' value={inputValue.password} onChange={handleChange} />
         </div>
-
-
 
         <Button
           className="w-full mt-4"

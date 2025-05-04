@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// login
 const loginUser = async (userData) => {
     try {
         const response = await axios.post(
@@ -11,16 +10,12 @@ const loginUser = async (userData) => {
                 headers: { "Content-Type": "application/json" },
             }
         );
-
-        window.localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         return response.data;
     } catch (error) {
         return error.response?.data || { success: false, message: 'Something went wrong' };
     }
 };
 
-
-
 const authService = { loginUser };
-
 export default authService;

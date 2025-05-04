@@ -1,9 +1,14 @@
 import React from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { X } from 'lucide-react';
+import { removeFromCart } from '@/redux/slices/cartSlice';
 
 const CartProduct = ({ _id, name, price, quantity, image, stock }) => {
+    const dispatch = useDispatch();
     const navigate = useNavigate();
+
     const total = price * quantity;
 
     const handleBuyNow = async () => {
@@ -11,7 +16,13 @@ const CartProduct = ({ _id, name, price, quantity, image, stock }) => {
             toast.error('Product out of stock');
             return;
         }
-        navigate('/'); 
+        navigate('/');
+    };
+
+    const handleRemove = (e) => {
+        e.stopPropagation(); // prevent triggering handleBuyNow
+        dispatch(removeFromCart(_id));
+        toast.success('Product removed from cart');
     };
 
     return (
@@ -21,7 +32,7 @@ const CartProduct = ({ _id, name, price, quantity, image, stock }) => {
         >
             <div className="flex items-center">
                 <img
-                    src={image || '/fallback.jpg'} // ✅ Fallback image
+                    src={image || '/fallback.jpg'}
                     alt={name}
                     className="w-16 h-16 object-cover rounded-md"
                 />
@@ -30,10 +41,17 @@ const CartProduct = ({ _id, name, price, quantity, image, stock }) => {
                     <p className="text-sm text-gray-500">Qty: {quantity}</p>
                 </div>
             </div>
-            <div className="flex items-center">
-                <p className="font-semibold text-gray-900">
-                    0
-                </p>
+
+            <div className="flex items-center space-x-4">
+                <p className="font-semibold text-gray-900">0</p>
+
+                <button
+                    onClick={handleRemove}
+                    className="text-red-500 hover:text-red-700 transition"
+                    title="Remove from cart"
+                >
+                    <X size={18} />
+                </button>
             </div>
         </div>
     );

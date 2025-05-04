@@ -61,20 +61,13 @@ const cartSlice = createSlice({
     },
 
     removeFromCart: (state, action) => {
-      const itemToRemove = action.payload;
-      const existingIndex = state.cartItems.findIndex(item => item._id === itemToRemove._id);
+      const _id = action.payload;
+      const existingItem = state.cartItems.find(item => item._id === _id);
+      if (!existingItem) return;
 
-      if (existingIndex === -1) return;
-
-      const existingItem = state.cartItems[existingIndex];
-      existingItem.quantity -= itemToRemove.quantity;
-      existingItem.totalItemPrice -= itemToRemove.quantity * itemToRemove.price;
-      state.totalQuantity -= itemToRemove.quantity;
-      state.totalPrice = Number((state.totalPrice - itemToRemove.quantity * itemToRemove.price).toFixed(2));
-
-      if (existingItem.quantity <= 0) {
-        state.cartItems.splice(existingIndex, 1);
-      }
+      state.totalQuantity -= existingItem.quantity;
+      state.totalPrice = Number((state.totalPrice - existingItem.quantity * existingItem.price).toFixed(2));
+      state.cartItems = state.cartItems.filter(item => item._id !== _id);
 
       saveStateIntoLocalStorage(state);
     },

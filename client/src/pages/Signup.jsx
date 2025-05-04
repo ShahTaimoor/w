@@ -1,45 +1,54 @@
-import { Input } from '@/components/ui/input'
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from '@/components/ui/button'
-import { toast } from "sonner"
-import { Loader2 } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import axios from 'axios'
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, Eye, EyeOff } from 'lucide-react'; // Add Eye and EyeOff icons
+import axios from 'axios';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Signup = () => {
-
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // State for showing password
+  const navigate = useNavigate();
   const [inputValue, setInputValues] = useState({
     name: '',
-    email: '',
     password: ''
-  })
+  });
 
   const handleChange = (e) => {
-    const name = e.target.name;
-    const value = e.target.value;
-    setInputValues((values) => ({ ...values, [name]: value }));
+    const { name, value } = e.target;
+    setInputValues((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    axios
-      .post(import.meta.env.VITE_API_URL + '/signup', inputValue, {
-        headers: { "Content-Type": "application/json" }
-      })
-      .then((response) => {
-        console.log(response);
-        navigate('/login')
-      })
-      .catch((error) => {
-        console.log(error);
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-      })
-  }
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/signup`,
+        inputValue,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      toast.success('Signup successful! Please login.');
+      navigate('/login');
+    } catch (err) {
+      console.error(err);
+      toast.error('User already exists. Please choose another name.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <div className='w-full mx-auto md:w-1/2 flex flex-col justify-center items-center p-8 md:p-12'>
@@ -48,9 +57,7 @@ const Signup = () => {
           <h2 className='text-xl font-medium'>Zaryab Auto</h2>
         </div>
         <h2 className='text-2xl font-bold text-center mb-6'>Hey There!</h2>
-        <p className='text-center mb-6'>
-          Enter your details to Sign Up
-        </p>
+        <p className='text-center mb-6'>Enter your details to Sign Up</p>
 
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -61,16 +68,36 @@ const Signup = () => {
 
         <div className='mb-4'>
           <label className='block text-sm font-semibold mb-2'>Name</label>
-          <Input onChange={handleChange} placeholder='Enter Your Name' type='text' name='name' value={inputValue.name} />
+          <Input
+            onChange={handleChange}
+            placeholder='Enter Your Name'
+            type='text'
+            name='name'
+            value={inputValue.name}
+            required
+          />
         </div>
-        <div className='mb-4'>
-          <label className='block text-sm font-semibold mb-2'>Email</label>
-          <Input onChange={handleChange} placeholder='Enter Your Email' type='text' name='email' value={inputValue.email} />
-        </div>
-        <div className='mb-4'>
+
+        <div className='mb-4 relative'>
           <label className='block text-sm font-semibold mb-2'>Password</label>
-          <Input onChange={handleChange} placeholder='Enter Your Password' type='password' name='password' value={inputValue.password} />
+          <Input
+            onChange={handleChange}
+            placeholder='Enter Your Password'
+            type={showPassword ? 'text' : 'password'} // Toggle between text and password
+            name='password'
+            value={inputValue.password}
+            required
+          />
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2"
+            onClick={togglePasswordVisibility}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? <EyeOff className="h-5 w-5 mt-7 text-gray-500 mr-1.5" /> : <Eye className="h-5 w-5 mt-7 mr-1.5 text-gray-500" />}
+          </button>
         </div>
+
         <Button className='w-full mt-4' disabled={loading}>
           {loading ? (
             <>
@@ -81,13 +108,14 @@ const Signup = () => {
             'Sign Up'
           )}
         </Button>
+
         <p className='mt-6 text-center text-sm'>
           Already have an account?
           <Link to='/login' className='text-blue-500 ml-1'>Login</Link>
         </p>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default Signup
+export default Signup;

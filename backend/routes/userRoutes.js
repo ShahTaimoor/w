@@ -10,22 +10,17 @@ const router = express.Router();
 // @desc    Register a new user
 // @access  Public
 router.post('/signup', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, password } = req.body;
 
   try {
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    user = await User.create({ name, email, password: hashedPassword });
+    const user = await User.create({ name, password: hashedPassword });
 
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      user
+      user,
     });
   } catch (error) {
     console.error(error);
@@ -33,32 +28,31 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+
 // @route   POST /api/users/login
 // @desc    Authenticate user
 // @access  Public
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { name, password } = req.body;
 
   try {
-    let user = await User.findOne({ email });
+    const user = await User.findOne({ name });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
+    if (!isMatch) return res.status(401).json({ message: 'Invalid name or password' });
 
     user.password = undefined;
 
-    // Generate JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXP || '1d',
     });
 
-    // Send token in secure cookie (works with Vercel frontend)
     return res.cookie('token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'None', // required for cross-origin
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      sameSite: 'None',
+      maxAge: 24 * 60 * 60 * 1000,
     }).status(200).json({
       success: true,
       user,
@@ -69,6 +63,7 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error during login');
   }
 });
+
 
 // @route   GET /api/users/logout
 // @desc    Log out the user
