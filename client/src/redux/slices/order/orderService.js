@@ -40,7 +40,7 @@ const addOrder = async (orderData) => {
 const getAllOrderAdmin = async () => {
   try {
     const axiosResponse = await axios.get(`${API_URL}/get-all-orders`, {
-      withCredentials: true, // 
+      withCredentials: true, 
       headers: {
         'Content-Type': 'application/json',
       },
