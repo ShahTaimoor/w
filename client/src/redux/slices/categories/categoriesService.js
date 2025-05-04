@@ -6,10 +6,7 @@ const createCat = async (inputValues) => {
         const axiosResponse = await axios.post(
             `${import.meta.env.VITE_API_URL}/create-category`,
             inputValues,
-            {
-                withCredentials: true,
-               
-            }
+            { withCredentials: true }
         );
         return axiosResponse.data;
     } catch (error) {
@@ -20,16 +17,18 @@ const createCat = async (inputValues) => {
 };
 
 // Update Category
-const updateCat = async ({ name, slug }) => {
+const updateCat = async ({ name, slug, picture }) => {
     try {
+        const formData = new FormData();
+        formData.append('name', name);
+        if (picture) formData.append('picture', picture);
+
         const axiosResponse = await axios.put(
             `${import.meta.env.VITE_API_URL}/update-category/${slug}`,
-            { name },
-            {
-                withCredentials: true,
-                headers: { "Content-Type": "application/json" },
-            }
+            formData,
+            { withCredentials: true }
         );
+
         return axiosResponse.data;
     } catch (error) {
         const errorMessage =
@@ -43,29 +42,7 @@ const deleteCat = async (slug) => {
     try {
         const axiosResponse = await axios.delete(
             `${import.meta.env.VITE_API_URL}/delete-category/${slug}`,
-            {
-                withCredentials: true,
-                headers: { "Content-Type": "application/json" },
-            }
-        );
-        return axiosResponse.data;
-    } catch (error) {
-        const errorMessage =
-            error.response?.data?.message || error.message || 'Something went wrong';
-        return Promise.reject(errorMessage);
-    }
-};
-
-// Get Single Categories
-const getSingleCat = async (slug) => {
-    try {
-        const axiosResponse = await axios.get(
-            `${import.meta.env.VITE_API_URL}/single-category/${slug}`,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
+            { withCredentials: true, headers: { "Content-Type": "application/json" } }
         );
         return axiosResponse.data;
     } catch (error) {
@@ -80,11 +57,22 @@ const getAllCat = async () => {
     try {
         const axiosResponse = await axios.get(
             `${import.meta.env.VITE_API_URL}/all-category`,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }
+            { headers: { 'Content-Type': 'application/json' } }
+        );
+        return axiosResponse.data;
+    } catch (error) {
+        const errorMessage =
+            error.response?.data?.message || error.message || 'Something went wrong';
+        return Promise.reject(errorMessage);
+    }
+};
+
+// Get Single Category
+const getSingleCat = async (slug) => {
+    try {
+        const axiosResponse = await axios.get(
+            `${import.meta.env.VITE_API_URL}/single-category/${slug}`,
+            { headers: { 'Content-Type': 'application/json' } }
         );
         return axiosResponse.data;
     } catch (error) {

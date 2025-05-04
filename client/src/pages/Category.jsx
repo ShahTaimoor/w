@@ -63,7 +63,6 @@ const Category = () => {
     }
   };
 
- 
   const addNewCategory = () => {
     if (!inputValues.name.trim()) {
       toast.error('Category name cannot be empty');
@@ -101,7 +100,11 @@ const Category = () => {
     }
 
     setLoading(true);
-    dispatch(updateCategory({ name: editingCategory.name, slug: editingCategory.slug }))
+    dispatch(updateCategory({
+      name: editingCategory.name,
+      slug: editingCategory.slug,
+      picture: editingCategory.picture,
+    }))
       .unwrap()
       .then((response) => {
         if (response?.success) {
@@ -197,6 +200,16 @@ const Category = () => {
                 name="picture"
                 onChange={handleChange}
               />
+              {/* Image preview */}
+              {inputValues.picture && (
+                <div className="mt-2">
+                  <img
+                    src={URL.createObjectURL(inputValues.picture)}
+                    alt="Image Preview"
+                    className="w-32 h-32 object-cover rounded"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex space-x-2">
@@ -284,11 +297,7 @@ const Category = () => {
                     </TableCell>
                     <TableCell className="flex justify-end space-x-2">
                       <Button
-                        variant={
-                          editingCategory?.slug === category.slug
-                            ? 'default'
-                            : 'outline'
-                        }
+                        variant={editingCategory?.slug === category.slug ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => startEditing(category)}
                         disabled={loading}
@@ -299,9 +308,7 @@ const Category = () => {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() =>
-                          handleDelete(category.slug, category.name)
-                        }
+                        onClick={() => handleDelete(category.slug, category.name)}
                         disabled={loading || editingCategory?.slug === category.slug}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
